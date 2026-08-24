@@ -1,0 +1,1655 @@
+Imports System
+Imports System.IO
+Imports System.Data
+Imports System.Data.OleDb
+Public Class AssetValidator
+    Inherits System.Web.UI.Page
+
+#Region " Web Form Designer Generated Code "
+
+  'This call is required by the Web Form Designer.
+  <System.Diagnostics.DebuggerStepThrough()> Private Sub InitializeComponent()
+
+  End Sub
+  Protected WithEvents lblStatis As System.Web.UI.WebControls.Label
+  Protected WithEvents lblClientname As System.Web.UI.WebControls.Label
+  Protected WithEvents lblFileName As System.Web.UI.WebControls.Label
+  Protected WithEvents lblRevisionNumber As System.Web.UI.WebControls.Label
+  Protected WithEvents lblDateUploaded As System.Web.UI.WebControls.Label
+  Protected WithEvents lblImportedBy As System.Web.UI.WebControls.Label
+  Protected WithEvents lblOrgUnitlevels As System.Web.UI.WebControls.Label
+  Protected WithEvents lblImportType As System.Web.UI.WebControls.Label
+  Protected WithEvents lblMoveType As System.Web.UI.WebControls.Label
+  Protected WithEvents lblMoveDate As System.Web.UI.WebControls.Label
+  Protected WithEvents Label1 As System.Web.UI.WebControls.Label
+
+  'Database Connection Details
+  Dim mySqlDataReader As System.Data.SqlClient.SqlDataReader
+  Dim MyConnection As System.Data.SqlClient.SqlConnection
+  Dim MyConnection2 As System.Data.SqlClient.SqlConnection
+  Dim MyConnection3 As System.Data.SqlClient.SqlConnection
+  Dim mySelectQuery As String
+  Dim myReader As System.Data.SqlClient.SqlDataReader
+  Dim myReader2 As System.Data.SqlClient.SqlDataReader
+  Dim myReader3 As System.Data.SqlClient.SqlDataReader
+  Dim MyCommand As New System.Data.SqlClient.SqlCommand
+  Dim MyCommand2 As New System.Data.SqlClient.SqlCommand
+
+  'Other Veriables
+  Dim sUploadFileName As String
+  Dim suploadDate As String
+  Dim sUploadUser As String
+  Dim sUploadChecked As String
+  Dim sUploadVerified As String
+  Dim sUploadSuccessful As String
+  Dim sUploadRemoved As String
+  Dim sUploadFormat As String
+  Dim sClientID As String
+  Dim sRevisionNumber As String
+  Dim sImportedBy As String
+  Dim sOrgLevels As String
+  Dim sImportType As String
+  Dim sMoveType As String
+  Dim sMoveDate As String
+  Dim OrgUnitParentID As Integer
+  Dim lineCounter As Integer
+  Dim CriticalError As Boolean
+  Dim sServiceID As String
+  Dim sUserID As String
+  Dim noAssets As Integer
+  Dim sImportState As String
+  Dim sServiceUser As String
+  Dim sOutputLabel As String
+
+  'Column Variables
+  Dim ServiceNumberCOL As Integer
+  Dim FirstNameCOL As Integer
+  Dim LastNameCOL As Integer
+  Dim CarrierNameCOL As Integer
+  Dim AccountNumberCOL As Integer
+  Dim RatePlanCOL As Integer
+  Dim ContractEndDateCOL As Integer
+  Dim PhoneUserEmailCOL As Integer
+  Dim CostCodeCOL As Integer
+  Dim Custom1COL As Integer
+  Dim Custom2COL As Integer
+  Dim Custom3COL As Integer
+  Dim Custom4COL As Integer
+  Dim EmployeeBudgetCOL As Integer
+  Dim NetworkTypeCOL As Integer
+  Dim Feature1COL As Integer
+  Dim Feature2COL As Integer
+  Dim Feature3COL As Integer
+  Dim Feature4COL As Integer
+  Dim Feature5COL As Integer
+  Dim Feature6COL As Integer
+  Dim Feature7COL As Integer
+  Dim Feature8COL As Integer
+  Dim Feature9COL As Integer
+  Dim Feature0COL As Integer
+
+  Dim AssetTypeCOL As Integer
+  Dim AssetManafacturerCOL As Integer
+  Dim AssetNameCOL As Integer
+  Dim IMEESNNumberCOL As Integer
+  Dim AssetNumberCOL As Integer
+  Dim SerialNumberCOL As Integer
+  Dim ManafacturerCOL As Integer
+  Dim AccessoryNameCOL As Integer
+  Protected WithEvents lblImportState As System.Web.UI.WebControls.Label
+  Protected WithEvents TextBox1 As System.Web.UI.WebControls.TextBox
+  Protected WithEvents hlProcess As System.Web.UI.WebControls.HyperLink
+
+  'NOTE: The following placeholder declaration is required by the Web Form Designer.
+  'Do not delete or move it.
+  Private designerPlaceholderDeclaration As System.Object
+
+  Private Sub Page_Init(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Init
+    'CODEGEN: This method call is required by the Web Form Designer
+    'Do not modify it using the code editor.
+    InitializeComponent()
+  End Sub
+
+#End Region
+
+  Private Sub Page_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
+    'Put user code to initialize the page here
+    If Not IsPostBack Then
+      Response.Write("<Script>" & vbCrLf)
+      Response.Write("function showpopup(message)" & vbCrLf)
+      Response.Write("    {" & vbCrLf)
+      Response.Write("        msgWindow=window.open('','Status','width=180,height=220')" & vbCrLf)
+      Response.Write("        msgWindow.document.write('<LINK id=stylesheet href=""" & Session("Style") & """ type=text/css rel=stylesheet>')" & vbCrLf)
+      Response.Write("        msgWindow.document.write('<BODY>')" & vbCrLf)
+      Response.Write("        msgWindow.document.write('<div align=center>' + message + '</div>')" & vbCrLf)
+      Response.Write("        msgWindow.document.write('<center><img src=../images/timer.gif>')" & vbCrLf)
+      Response.Write("        msgWindow.document.write('<form name=StatusForm>')" & vbCrLf)
+      Response.Write("        msgWindow.document.write('<input type=text name=tbxStatus>')" & vbCrLf)
+      Response.Write("        msgWindow.document.write('</form>')" & vbCrLf)
+      Response.Write("        msgWindow.document.write('')" & vbCrLf)
+      Response.Write("        msgWindow.document.write('</center></BODY>')" & vbCrLf)
+      Response.Write("        msgWindow.document.close();" & vbCrLf)
+      Response.Write("    }" & vbCrLf)
+
+      Response.Write("    function closepopup()" & vbCrLf)
+      Response.Write("    {" & vbCrLf)
+      Response.Write("        If (!msgWindow.closed) " & vbCrLf)
+      Response.Write("        msgWindow.close();" & vbCrLf)
+      Response.Write("    }" & vbCrLf)
+
+      Response.Write("    showpopup('Please wait.');" & vbCrLf)
+      Response.Write("</Script>" & vbCrLf & vbCrLf)
+      Response.Write("<LINK id=stylesheet href=""" & Session("Style") & """ type=text/css rel=stylesheet>" & vbCrLf)
+
+      hlProcess.NavigateUrl = "UploadAssets.aspx?UID="REDACTED"UID") & "&FileName=" & Request("FileName")
+      hlProcess.Visible = True
+      Label1.Text = vbCrLf
+      MyConnection = New System.Data.SqlClient.SqlConnection(Session("OperationalDB"))
+      MyConnection2 = New System.Data.SqlClient.SqlConnection(Session("OperationalDB"))
+      MyConnection3 = New System.Data.SqlClient.SqlConnection(Session("OperationalDB"))
+      CriticalError = False
+      lblStatis.Text = ""
+      Call GetFileDetails()
+      sOutputLabel = "<table class='stdTable' width='580' border='1' bordercolor='#000000' cellspacing='0' cellpadding='2'>" & vbCrLf
+      If Right(Request("FileName"), 3) = "csv" Then
+        Call GetCSVData()
+      ElseIf Right(Request("FileName"), 3) = "xls" Then
+        Call GetExcelData()
+      Else
+        Call ErrorMessage("Invalid File Type", 0, 3)
+      End If
+      If CriticalError Then
+        hlProcess.Visible = False
+        hlProcess.Enabled = False
+      End If
+      'end file
+      Response.Write("<script> msgWindow.document.StatusForm.tbxStatus.value='Validation Complete.'; </script>" & vbCrLf)
+      'close popup window
+      mySelectQuery = "SELECT LineOutput FROM AssetImporterLines WHERE (ClientID = " & sClientID & ") AND (FileName = '" & Request("FileName") & "') ORDER BY UID"
+      MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+      If MyConnection.State.ToString = "Closed" Then
+        MyConnection.Open()
+      End If
+      myReader = MyCommand.ExecuteReader()
+      Do While myReader.Read()
+        Label1.Text = Label1.Text & myReader("LineOutput").ToString()
+        Trace.Write(myReader("LineOutput").ToString())
+      Loop
+      myReader.Close()
+      Label1.Text = Label1.Text & "</table>" & vbCrLf
+      'Label1.Text = sOutputLabel
+      Response.Write("<Script>" & vbCrLf)
+      Response.Write("msgWindow.close();" & vbCrLf)
+      Response.Write("</Script>" & vbCrLf & vbCrLf)
+      Call ClearTables(sClientID)
+    End If
+  End Sub
+  Sub GetFileDetails()
+    lineCounter = 1
+    mySelectQuery = "SELECT * FROM ImportAssetRegister WHERE UID = "REDACTED"UID")
+    MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+
+    If MyConnection.State.ToString = "Closed" Then
+      MyConnection.Open()
+    End If
+    myReader = MyCommand.ExecuteReader()
+    myReader.Read()
+
+    sUploadFileName = myReader("UploadFileName").ToString()
+    suploadDate = myReader("uploadDate").ToString()
+    sUploadUser = myReader("UploadUser").ToString()
+    sUploadChecked = myReader("UploadChecked").ToString()
+    sUploadVerified = myReader("UploadVerified").ToString()
+    sUploadSuccessful = myReader("UploadSuccessful").ToString()
+    sUploadRemoved = myReader("UploadRemoved").ToString()
+    sUploadFormat = myReader("UploadFormat").ToString()
+    sClientID = myReader("ClientID").ToString()
+    sRevisionNumber = myReader("RevisionNumber").ToString()
+    sImportedBy = myReader("ImportedBy").ToString()
+    sImportType = myReader("ImportType").ToString()
+    sMoveType = myReader("MoveType").ToString()
+    sMoveDate = myReader("MoveDate").ToString()
+    sImportState = GetImportState(myReader("ImportState").ToString())
+
+    'set lables
+    lblClientname.Text = getClientName(sClientID)
+    lblFileName.Text = sUploadFileName
+    lblRevisionNumber.Text = sRevisionNumber
+    lblDateUploaded.Text = suploadDate
+    lblImportedBy.Text = sImportedBy
+    lblOrgUnitlevels.Text = sOrgLevels
+    lblImportType.Text = GetImportType(sImportType)
+    lblMoveType.Text = GetMoveType(sMoveType)
+    lblMoveDate.Text = sMoveDate
+    lblImportState.Text = sImportState
+    myReader.Close()
+
+    Call ClearTables(sClientID)
+
+    'Insert all the current org units and their respective Parents into the Temp Table
+    mySelectQuery = "SELECT OrgUnitID, OrgUnitParent, OrgUnitName FROM ClientOrganisationUnit WHERE (ClientID  = " & sClientID & ")"
+    MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+    If MyConnection.State.ToString = "Closed" Then
+      MyConnection.Open()
+    End If
+    myReader = MyCommand.ExecuteReader()
+    Do While myReader.Read()
+      'Insert org unit into Temp Table
+      mySelectQuery = "INSERT INTO ImportTempOrgUnits (orgID, name, parent, clientID) VALUES ('" & myReader("OrgUnitID") & "', '" & Replace(LCase(Trim(myReader("OrgUnitName"))), "'", "''") & "', " & myReader("OrgUnitParent") & ", " & sClientID & ")"
+      'Trace.Write(mySelectQuery)
+      MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection3)
+      If MyConnection3.State.ToString = "Closed" Then
+        MyConnection3.Open()
+      End If
+      MyCommand.ExecuteNonQuery()
+      MyConnection3.Close()
+    Loop
+    myReader.Close()
+
+  End Sub
+  Sub ClearTables(ByVal sClientID)
+    'Remove All org units listed in the Temp Table for the selected client
+    mySelectQuery = "DELETE FROM ImportTempOrgUnits WHERE (ClientID = " & sClientID & ")"
+    MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+    If MyConnection.State.ToString = "Closed" Then
+      MyConnection.Open()
+    End If
+    MyCommand.ExecuteNonQuery()
+    MyConnection.Close()
+    mySelectQuery = "DELETE FROM ImportTempService WHERE (ClientID = " & sClientID & ")"
+    MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+    If MyConnection.State.ToString = "Closed" Then
+      MyConnection.Open()
+    End If
+    MyCommand.ExecuteNonQuery()
+    MyConnection.Close()
+    mySelectQuery = "DELETE FROM AssetImporterLines WHERE (ClientID = " & sClientID & ") AND (FileName = '" & Request("FileName") & "')"
+    MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+    If MyConnection.State.ToString = "Closed" Then
+      MyConnection.Open()
+    End If
+    MyCommand.ExecuteNonQuery()
+    MyConnection.Close()
+  End Sub
+  Function getClientName(ByVal ClientID)
+    mySelectQuery = "SELECT ClientName FROM Client WHERE ClientID = " & ClientID
+    MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection2)
+    If MyConnection2.State.ToString = "Closed" Then
+      MyConnection2.Open()
+    End If
+    myReader2 = MyCommand.ExecuteReader()
+    myReader2.Read()
+    Return myReader2("ClientName")
+    myReader2.Close()
+  End Function
+  Function GetImportState(ByVal StateID)
+    Dim tempstr As String
+    mySelectQuery = "SELECT State FROM State WHERE UID = "REDACTED"Closed" Then
+      MyConnection2.Open()
+    End If
+    myReader2 = MyCommand.ExecuteReader()
+    If myReader2.Read() Then
+      tempstr = myReader2("State")
+    End If
+    myReader2.Close()
+    Return tempstr
+  End Function
+  Public Function GetImportType(ByVal typeID)
+    If typeID = "1" Then
+      Return "Add Assets"
+    ElseIf typeID = "2" Then
+      Return "Skip Assets"
+    ElseIf typeID = "3" Then
+      Return "Update Assets"
+    ElseIf typeID = "4" Then
+      Return "Org Structure"
+    Else
+      Return "Error"
+    End If
+  End Function
+  Public Function GetMoveType(ByVal typeID)
+    If typeID = "1" Then
+      Return "Move All"
+    ElseIf typeID = "2" Then
+      Return "Move From"
+    ElseIf typeID = "3" Then
+      Return "Don't Move"
+    Else
+      Return "Error"
+    End If
+  End Function
+  Sub GetCSVData()
+    Dim FileLocation As String
+    FileLocation = Server.MapPath("AssetSheets") & "\" & Request("FileName")
+    Dim sr As StreamReader = New StreamReader(FileLocation)
+    Dim line As String
+    Dim counter As Integer
+    counter = 0
+    Do
+      line = sr.ReadLine()
+      line = Replace(Trim(line), "'", "''")
+      line = Replace(Trim(line), """", "")
+      '      Trace.Write("Start If")
+      If lineCounter > 2 Then
+        If counter > 2 Then
+          line = Nothing
+        ElseIf Left(Trim(line), 2) = ",," Or Trim(line) = "" Then
+          Call ErrorMessage("Line Skipped", lineCounter, 2)
+          sOutputLabel = sOutputLabel & "<tr class='even'><td class='Possible' colspan='99'><a NAME='" & lineCounter & "'></a>" & lineCounter & "</td></tr>" & vbCrLf
+          counter = counter + 1
+        Else
+          counter = 0
+          Dim aLine() = Split(line, ",")
+          Call ProcessData(aLine)
+        End If
+
+        sOutputLabel = Replace(sOutputLabel, "'", "''")
+
+        mySelectQuery = "INSERT INTO AssetImporterLines (LineOutput, ClientID, FileName) VALUES ('" & sOutputLabel & "', " & sClientID & ", '" & Request("FileName") & "')"
+        '        Trace.Write(mySelectQuery)
+        MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection3)
+        If MyConnection3.State.ToString = "Closed" Then
+          MyConnection3.Open()
+        End If
+        MyCommand.ExecuteNonQuery()
+        MyConnection3.Close()
+        MyCommand.Dispose()
+        sOutputLabel = ""
+      Else
+        If lineCounter = 2 Then
+          'Read in and return org levels
+          Call ProcessTitle(line)
+        End If
+      End If
+      lineCounter = lineCounter + 1
+    Loop Until line Is Nothing
+    sr.Close()
+    sOutputLabel = sOutputLabel & "<tr class='heading'><td colspan='99' height='2'>End File</td></tr></table>" & vbCrLf
+  End Sub
+  Sub GetExcelData()
+    Dim conn As New OleDbConnection
+    Dim fileReader As OleDbDataReader
+    Dim connString As String
+    Dim cmd As New OleDbCommand
+    Dim FilePath As String
+    Dim lineArray As Array
+    Dim FileLocation As String
+    FileLocation = Server.MapPath("AssetSheets") & "\" & Request("FileName")
+
+    ' Set the connection string.
+    connString = "Data Source='" & FileLocation & "';Provider=Microsoft.Jet.OLEDB.4.0;Extended Properties=""Excel 8.0;IMEX=1;HDR=NO;"""
+
+    ' Open the connection.
+    conn.ConnectionString = connString
+    conn.Open()
+
+    'get the sheet names
+    Dim dt As DataTable
+    dt = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, Nothing)
+    Dim excelSheets() As String = New String(dt.Rows.Count) {}
+    Dim i As Integer = 0
+    'get the sheet names
+    Dim row As DataRow
+    For Each row In dt.Rows
+      excelSheets(i) = row("TABLE_NAME").ToString()
+      i = i + 1
+    Next
+    i = 0
+
+    'Set the command properties.
+    cmd.Connection = conn
+    cmd.CommandText = "SELECT * FROM [" & excelSheets(0) & "]"
+
+    ' Get the OleDbDataReader
+    ' and do some processing with it.
+    fileReader = cmd.ExecuteReader(CommandBehavior.CloseConnection)
+    lineCounter = 1
+    Dim counter As Integer = 0
+    While (fileReader.Read())
+      'Load in file details
+      If counter < 2 Then
+        If lineCounter <> 1 Then
+          Dim line As String
+          i = 0
+          line = ""
+          While i < fileReader.FieldCount - 1
+            line = line & Trim(fileReader(i).ToString()) & ","
+            i = i + 1
+          End While
+
+          line = Replace(Trim(line), "'", "''")
+          line = Replace(Trim(line), """", "")
+
+          If Left(line, 10) = ",,,,,,,,,," Then
+            Call ErrorMessage("Line Skipped", lineCounter, 2)
+            sOutputLabel = sOutputLabel & "<tr class='even'><td class='Possible' colspan='99'><a NAME='" & lineCounter & "'></a>" & lineCounter & "</td></tr>" & vbCrLf
+            counter = counter + 1
+          Else
+            counter = 0
+            If lineCounter = 2 Then
+              ProcessTitle(line)
+            Else
+              Dim aLine() = Split(line, ",")
+              Call ProcessData(aLine)
+            End If
+
+          End If
+          sOutputLabel = Replace(sOutputLabel, "'", "''")
+
+          mySelectQuery = "INSERT INTO AssetImporterLines (LineOutput, ClientID, FileName) VALUES ('" & sOutputLabel & "', " & sClientID & ", '" & Request("FileName") & "')"
+          '        Trace.Write(mySelectQuery)
+          MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection3)
+          If MyConnection3.State.ToString = "Closed" Then
+            MyConnection3.Open()
+          End If
+          MyCommand.ExecuteNonQuery()
+          MyConnection3.Close()
+          MyCommand.Dispose()
+          sOutputLabel = ""
+
+
+        End If
+        lineCounter = lineCounter + 1
+      End If
+
+    End While
+    fileReader.Close()
+    sOutputLabel = sOutputLabel & "<tr class='heading'><td colspan='99' height='2'>End File</td></tr></table>" & vbCrLf
+  End Sub
+  Sub ProcessTitle(ByVal line)
+    Dim aLine() = Split(line, ",")
+    Call SetOrgUnitLevels(aLine)
+    'output title row
+    sOutputLabel = sOutputLabel & "<tr class='even'>" & vbCrLf
+    sOutputLabel = sOutputLabel & "<td class='title'>#</td>" & vbCrLf
+    Dim i As Integer = 0
+    For i = 1 To sOrgLevels
+      sOutputLabel = sOutputLabel & "<td class='title'>Org Level " & i & "</td>" & vbCrLf
+    Next
+    If sImportType.ToString() <> "4" Then
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Service</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>First Name</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Last Name</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Carrier</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Account Number</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Rate Plan</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Contract<br>End Date</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Email</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Cost Code</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Custom1</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Custom2</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Custom3</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Custom4</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Employee Budget</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Network Type</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Feature1</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Feature2</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Feature3</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Feature4</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Feature5</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Feature6</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Feature7</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Feature8</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Feature9</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='title' nowrap>Feature0</td>" & vbCrLf
+      'Repeating
+      If noAssets > 0 And sImportType <> "2" Then
+        Dim i2 As Integer
+        For i2 = 1 To noAssets
+          sOutputLabel = sOutputLabel & "<td class='title' nowrap>Asset Type</td>" & vbCrLf
+          sOutputLabel = sOutputLabel & "<td class='title' nowrap>Asset Manufacturer</td>" & vbCrLf
+          sOutputLabel = sOutputLabel & "<td class='title' nowrap>Asset Name</td>" & vbCrLf
+          sOutputLabel = sOutputLabel & "<td class='title' nowrap>IMEI / ESN / MAC<br>Number</td>" & vbCrLf
+          sOutputLabel = sOutputLabel & "<td class='title' nowrap>Asset Number</td>" & vbCrLf
+          sOutputLabel = sOutputLabel & "<td class='title' nowrap>Serial Number</td>" & vbCrLf
+        Next
+      End If
+    End If
+    sOutputLabel = sOutputLabel & "</tr>" & vbCrLf
+  End Sub
+  Sub SetOrgUnitLevels(ByVal aline As Array)
+    Dim i As Object
+    Dim zz As Boolean
+    Dim orgLevels As Integer
+    zz = True
+    orgLevels = 0
+    For Each i In aline
+      If zz Then
+        If sImportType.ToString() = "4" Then
+          If aline(orgLevels).ToString() <> "Destination Org Unit" Then
+            orgLevels = orgLevels + 1
+          Else
+            sOrgLevels = orgLevels ' - 1
+            zz = False
+          End If
+        Else
+          If aline(orgLevels).ToString() <> "Service Number" Then
+            orgLevels = orgLevels + 1
+          Else
+            sOrgLevels = orgLevels - 1
+            zz = False
+          End If
+        End If
+
+      End If
+    Next i
+    lblOrgUnitlevels.Text = sOrgLevels
+    Call SetColCount()
+    Call CheckAssetCount(UBound(aline))
+
+  End Sub
+  Sub ProcessData(ByVal DetailsArray As Array)
+    'check that row is valid (containd critical information)
+    Response.Write("<script> msgWindow.document.StatusForm.tbxStatus.value='Validating Line " & lineCounter & "'; </script>" & vbCrLf)
+    Trace.Write(lineCounter)
+    Dim i As Integer = 0
+    Dim DetailsLength As String
+    If sImportType <> "2" Or sImportType <> 4 Then
+      Call CheckAssetCount(UBound(DetailsArray))
+    End If
+    DetailsArray = CheckArraySize(DetailsArray)
+    OrgUnitParentID = 0
+    'Output TR header
+    'sOutputLabel = ""
+    sOutputLabel = sOutputLabel & "<tr class='even'>" & vbCrLf
+    sOutputLabel = sOutputLabel & "<td class='white'><a NAME='" & lineCounter & "'>" & lineCounter & "</a></td>" & vbCrLf
+    For i = 0 To sOrgLevels - 1
+      'Check if the org unit is in the Temp table
+      If i = 0 And DetailsArray(i) = "" Then
+        ErrorMessage("You MUST enter in an Org Structure.", lineCounter, 3)
+        sOutputLabel = sOutputLabel & "<td class='Critical'>-</td>" & vbCrLf
+      Else
+        Call ProcessOrgUnit(DetailsArray(i), OrgUnitParentID)
+      End If
+    Next
+    If sImportType.ToString() <> "4" Then
+      Call ProcessService(DetailsArray(ServiceNumberCOL))
+      Call ProcessUser(DetailsArray(FirstNameCOL), DetailsArray(LastNameCOL))
+      Call ProcessServiceDetails(DetailsArray(CarrierNameCOL), DetailsArray(ServiceNumberCOL), DetailsArray(AccountNumberCOL), DetailsArray(RatePlanCOL), DetailsArray(ContractEndDateCOL))
+      Call ProcessUserDetails(DetailsArray(FirstNameCOL), DetailsArray(LastNameCOL), DetailsArray(PhoneUserEmailCOL), DetailsArray(CostCodeCOL), DetailsArray(Custom1COL), DetailsArray(Custom2COL), DetailsArray(Custom3COL), DetailsArray(Custom4COL), DetailsArray(EmployeeBudgetCOL))
+      Call PricessServiceOptions(DetailsArray(NetworkTypeCOL), DetailsArray(ServiceNumberCOL), DetailsArray(Feature1COL), DetailsArray(Feature2COL), DetailsArray(Feature3COL), DetailsArray(Feature4COL), DetailsArray(Feature5COL), DetailsArray(Feature6COL), DetailsArray(Feature7COL), DetailsArray(Feature8COL), DetailsArray(Feature9COL), DetailsArray(Feature0COL))
+      If sImportType <> "2" Then
+        Call ProcessAssets(DetailsArray)
+      End If
+      sOutputLabel = sOutputLabel & "</tr>" & vbCrLf
+    End If
+  End Sub
+  Function ProcessOrgUnit(ByVal OrgUnitName, ByVal ParentID)
+    'check where parentID = 0 and Name matches, if not then caution output
+    OrgUnitName = Trim(OrgUnitName.ToString())
+    If OrgUnitName = "" Then
+      sOutputLabel = sOutputLabel & "<td class='white'>-</td>"
+    Else
+      If Len(OrgUnitName) > 50 Then
+        'error
+        ErrorMessage("Org Unit <b>'" & OrgUnitName & "'</b> Length is to long, maximum 50 chars", lineCounter, 3)
+        sOutputLabel = sOutputLabel & "<td class='Critical'>" & OrgUnitName & "</td>" & vbCrLf
+      Else
+
+        mySelectQuery = "SELECT * FROM ImportTempOrgUnits WHERE Name = '" & OrgUnitName & "' AND  ClientID = " & sClientID
+        MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+        If MyConnection.State.ToString = "Closed" Then
+          MyConnection.Open()
+        End If
+        myReader.Close()
+        myReader = MyCommand.ExecuteReader()
+        If myReader.Read() Then
+          'Org Unit in db. caution, check for org unit in different location.
+          If myReader("Parent") = ParentID Then
+            sOutputLabel = sOutputLabel & "<td class='white'>" & OrgUnitName & "</td>" & vbCrLf
+            OrgUnitParentID = myReader("OrgID")
+          Else
+            ErrorMessage("Org Unit <b>'" & OrgUnitName & "'</b> structure invalid", lineCounter, 3)
+            sOutputLabel = sOutputLabel & "<td class='Critical'>" & OrgUnitName & "</td>" & vbCrLf
+          End If
+        Else
+          'New Org Unit
+          myReader.Close()
+          Call InsertNewOrgUnit(OrgUnitName, ParentID)
+          sOutputLabel = sOutputLabel & "<td class='New'>" & OrgUnitName & "</td>" & vbCrLf
+        End If
+        myReader.Close()
+
+      End If
+
+    End If
+  End Function
+  Sub InsertNewOrgUnit(ByVal OrgUnitName, ByVal OrgUnitParent)
+    mySelectQuery = "INSERT INTO ImportTempOrgUnits (name, parent, clientID) VALUES ('" & OrgUnitName.ToString() & "', " & OrgUnitParent.ToString & ", " & sClientID & ") ;select @@identity"
+    MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+    myReader.Close()
+    myReader3 = MyCommand.ExecuteReader()
+    myReader3.Read()
+    OrgUnitParentID = myReader3.Item(0).ToString()
+    myReader3.Close()
+    mySelectQuery = "UPDATE ImportTempOrgUnits SET OrgID = " + OrgUnitParentID.ToString() + " WHERE UID = "REDACTED"Closed" Then
+      MyConnection.Open()
+    End If
+    MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+    MyCommand.ExecuteNonQuery()
+  End Sub
+  Sub ProcessService(ByVal ServiceNumber)
+    Dim tempmobile As String
+    Dim intCounter As Integer
+    tempmobile = ""
+    ' Strip away everything except numerals
+    For intCounter = 1 To Len(ServiceNumber)
+      If IsNumeric(Mid(ServiceNumber, intCounter, 1)) Then
+        tempmobile = tempmobile & Mid(ServiceNumber, intCounter, 1)
+      End If
+    Next
+
+    ServiceNumber = tempmobile
+
+    sServiceID = ""
+    If ServiceNumber = "" Then
+      Call ErrorMessage("Blank Service", lineCounter, 2)
+      sOutputLabel = sOutputLabel & "<td class='Possible'>-</td>" & vbCrLf
+    Else
+      Dim RepeatService As Boolean
+      RepeatService = False
+
+      mySelectQuery = "SELECT ServiceNumber FROM ImportTempService WHERE (ServiceNumber = '" & ServiceNumber & "') AND (ClientID = " & sClientID & ")"
+      MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+      If MyConnection.State.ToString = "Closed" Then
+        MyConnection.Open()
+      End If
+      myReader = MyCommand.ExecuteReader()
+      If myReader.Read() Then
+        RepeatService = True
+      End If
+      myReader.Close()
+
+      If RepeatService Then
+        'error
+        sOutputLabel = sOutputLabel & "<td class='Possible'>" & ServiceNumber & "</td>" & vbCrLf
+        Call ErrorMessage("Duplicate Service", lineCounter, 2)
+      Else
+        'no error
+        mySelectQuery = "SELECT ServiceNumber, ServiceID, OrgUnitID, UserID FROM Service WHERE (EndDate IS NULL) AND (ServiceNumber = '" & ServiceNumber & "') AND (ClientID = " & sClientID & ")"
+        MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+        If MyConnection.State.ToString = "Closed" Then
+          MyConnection.Open()
+        End If
+        myReader = MyCommand.ExecuteReader()
+        If myReader.Read() Then
+          'old service
+          sServiceID = myReader("ServiceID")
+          sServiceUser = myReader("UserID")
+          If myReader("OrgUnitID").ToString() = OrgUnitParentID.ToString() Then
+            sOutputLabel = sOutputLabel & "<td class='white'>" & ServiceNumber & "</td>" & vbCrLf
+          Else
+            sOutputLabel = sOutputLabel & "<td class='Move'>" & ServiceNumber & "</td>" & vbCrLf
+          End If
+        Else
+          'new Service
+          sOutputLabel = sOutputLabel & "<td class='New'>" & ServiceNumber & "</td>" & vbCrLf
+
+
+        End If
+        myReader.Close()
+
+        mySelectQuery = "INSERT INTO ImportTempService (ServiceNumber, ClientID) VALUES ('" & ServiceNumber & "', " & sClientID & ")"
+        MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection3)
+        If MyConnection3.State.ToString = "Closed" Then
+          MyConnection3.Open()
+        End If
+        MyCommand.ExecuteNonQuery()
+        MyConnection3.Close()
+
+      End If
+
+    End If
+
+  End Sub
+  Sub ProcessUser(ByVal FirstName, ByVal LastName)
+    sUserID = ""
+    If FirstName = "" And LastName = "" Then
+      Call ErrorMessage("Blank User Name", lineCounter, 2)
+      sOutputLabel = sOutputLabel & "<td class='Possible'>-</td>" & "<td class='Possible'>-</td>" & vbCrLf
+    Else
+      mySelectQuery = "SELECT FirstName, LastName, UserID, OrgUnitID FROM Users WHERE (EndDate IS NULL) AND (ClientID = " & sClientID & ") AND (FirstName = '" & FirstName & "') AND (LastName = '" & LastName & "')"
+      MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+      If MyConnection.State.ToString = "Closed" Then
+        MyConnection.Open()
+      End If
+      myReader = MyCommand.ExecuteReader()
+      If myReader.Read() Then
+        'Existing User
+        sUserID =REDACTED"UserID").ToString()
+        If myReader("OrgUnitID").ToString() = OrgUnitParentID.ToString() And myReader("UserID").ToString() = sServiceUser.ToString() Then
+          sOutputLabel = sOutputLabel & "<td class='white'>" & FirstName & "</td>" & "<td class='white'>" & LastName & "</td>" & vbCrLf
+        Else
+          sOutputLabel = sOutputLabel & "<td class='Move'>" & FirstName & "</td>" & "<td class='Move'>" & LastName & "</td>" & vbCrLf
+        End If
+
+      Else
+        'New User
+        sOutputLabel = sOutputLabel & "<td class='New'>" & FirstName & "</td>" & "<td class='New'>" & LastName & "</td>" & vbCrLf
+      End If
+      myReader.Close()
+    End If
+
+  End Sub
+  Sub ProcessServiceDetails(ByVal Carrier, ByVal ServiceNumber, ByVal AccountNumber, ByVal RatePlan, ByVal ContractEndDate)
+    'Carrier
+    If Carrier = "" Then
+      ErrorMessage("Carrier <b>'" & Carrier & "'</b> invalid", lineCounter, 3)
+      sOutputLabel = sOutputLabel & "<td class='Critical'>" & Carrier & "</td>" & vbCrLf
+    Else
+      mySelectQuery = "SELECT DISTINCT ProviderName FROM ServiceProvider WHERE (ProviderName = '" & Carrier & "')"
+      MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+      If MyConnection.State.ToString = "Closed" Then
+        MyConnection.Open()
+      End If
+      myReader = MyCommand.ExecuteReader()
+      If myReader.Read() Then
+        sOutputLabel = sOutputLabel & "<td class='White'>" & Carrier & "</td>" & vbCrLf
+      Else
+        ErrorMessage("Carrier <b>'" & Carrier & "'</b> invalid", lineCounter, 3)
+        sOutputLabel = sOutputLabel & "<td class='Critical'>" & Carrier & "</td>" & vbCrLf
+      End If
+      myReader.Close()
+    End If
+    If AccountNumber = "" And RatePlan = "" Then
+      sOutputLabel = sOutputLabel & "<td class='white'>-</td>" & vbCrLf
+      sOutputLabel = sOutputLabel & "<td class='white'>-</td>" & vbCrLf
+    Else
+      If ServiceNumber = "" Then
+        ErrorMessage("Service Number blank", lineCounter, 2)
+        sOutputLabel = sOutputLabel & "<td class='Possible'>" & AccountNumber & "</td>" & vbCrLf
+        sOutputLabel = sOutputLabel & "<td class='Possible'>" & RatePlan & "</td>" & vbCrLf
+      Else
+        If sServiceID = "" Then
+          mySelectQuery = "SELECT DISTINCT ServiceProvider.ProviderName, Service.ProviderAccountNumber, ServiceProviderPlans.PlanName, ISNULL(Service.ContractEndDate, '') AS ContractEndDate, Service.ServiceNumber FROM Service INNER JOIN ServiceProvider ON Service.ServiceProviderID = ServiceProvider.UID INNER JOIN ServiceProviderPlans ON ServiceProvider.UID =REDACTED WHERE (Service.ClientID = " & sClientID & ") AND (Service.ServiceNumber = '" & ServiceNumber & "') AND (ServiceProvider.ProviderName = '" & Carrier & "') AND (Service.ProviderAccountNumber = '" & AccountNumber & "')"
+        Else
+          mySelectQuery = "SELECT DISTINCT ServiceProvider.ProviderName, Service.ProviderAccountNumber, ServiceProviderPlans.PlanName, ISNULL(Service.ContractEndDate, '') AS ContractEndDate, Service.ServiceNumber FROM Service INNER JOIN ServiceProvider ON Service.ServiceProviderID = ServiceProvider.UID INNER JOIN ServiceProviderPlans ON ServiceProvider.UID =REDACTED WHERE (Service.ClientID = " & sClientID & ") AND (ServiceProvider.ProviderName = '" & Carrier & "') AND (Service.ProviderAccountNumber = '" & AccountNumber & "')"
+        End If
+        MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+        If MyConnection.State.ToString = "Closed" Then
+          MyConnection.Open()
+        End If
+        myReader = MyCommand.ExecuteReader()
+        If myReader.Read() Then
+          sOutputLabel = sOutputLabel & "<td class='white'>" & AccountNumber & "</td>" & vbCrLf
+          If RatePlan = "" Then
+            sOutputLabel = sOutputLabel & "<td class='white'>-</td>" & vbCrLf
+          Else
+            sOutputLabel = sOutputLabel & "<td class='white'>" & RatePlan & "</td>" & vbCrLf
+          End If
+        Else
+          sOutputLabel = sOutputLabel & "<td class='new'>" & AccountNumber & "</td>" & vbCrLf
+          If RatePlan = "" Then
+            sOutputLabel = sOutputLabel & "<td class='white'>-</td>" & vbCrLf
+          Else
+            sOutputLabel = sOutputLabel & "<td class='new'>" & RatePlan & "</td>" & vbCrLf
+          End If
+        End If
+        myReader.Close()
+
+      End If
+    End If
+    If ContractEndDate = "" Then
+      sOutputLabel = sOutputLabel & "<td class='white'>-</td>" & vbCrLf
+    Else
+      If CDate(ContractEndDate) < Now Then
+        ErrorMessage("The contract end date <b>'" & ContractEndDate & "'</b> has past.", lineCounter, 2)
+        sOutputLabel = sOutputLabel & "<td class='Possible'>" & ContractEndDate & "</td>" & vbCrLf
+      Else
+        sOutputLabel = sOutputLabel & "<td class='New'>" & ContractEndDate & "</td>" & vbCrLf
+      End If
+    End If
+  End Sub
+  Sub ProcessUserDetails(ByVal FirstName, ByVal LastName, ByVal Email, ByVal CostCode, ByVal Custom1, ByVal Custom2, ByVal Custom3, ByVal Custom4, ByVal EmployeeBudget)
+    If FirstName = "" And LastName = "" Then
+      If Email = "" Then
+        sOutputLabel = sOutputLabel & "<td class='White'>-</td>" & vbCrLf
+      Else
+        ErrorMessage("The Email field containing <b>'" & Email & "'</b> has no User to associate with so will be ignored.", lineCounter, 2)
+        sOutputLabel = sOutputLabel & "<td class='Possible'>" & Email & "</td>" & vbCrLf
+      End If
+      If CostCode = "" Then
+        sOutputLabel = sOutputLabel & "<td class='White'>-</td>" & vbCrLf
+      Else
+        ErrorMessage("The Cost Code field containing <b>'" & CostCode & "'</b> has no User to associate with so will be ignored.", lineCounter, 2)
+        sOutputLabel = sOutputLabel & "<td class='Possible'>" & CostCode & "</td>" & vbCrLf
+      End If
+      If Custom1 = "" Then
+        sOutputLabel = sOutputLabel & "<td class='White'>-</td>" & vbCrLf
+      Else
+        ErrorMessage("The Custom 1 field containing <b>'" & Custom1 & "'</b> has no User to associate with so will be ignored.", lineCounter, 2)
+        sOutputLabel = sOutputLabel & "<td class='Possible'>" & Custom1 & "</td>" & vbCrLf
+      End If
+      If Custom2 = "" Then
+        sOutputLabel = sOutputLabel & "<td class='White'>-</td>" & vbCrLf
+      Else
+        ErrorMessage("The Custom 2 field containing <b>'" & Custom2 & "'</b> has no User to associate with so will be ignored.", lineCounter, 2)
+        sOutputLabel = sOutputLabel & "<td class='Possible'>" & Custom2 & "</td>" & vbCrLf
+      End If
+      If Custom3 = "" Then
+        sOutputLabel = sOutputLabel & "<td class='White'>-</td>" & vbCrLf
+      Else
+        ErrorMessage("The Custom 3 field containing <b>'" & Custom3 & "'</b> has no User to associate with so will be ignored.", lineCounter, 2)
+        sOutputLabel = sOutputLabel & "<td class='Possible'>" & Custom3 & "</td>" & vbCrLf
+      End If
+      If Custom4 = "" Then
+        sOutputLabel = sOutputLabel & "<td class='White'>-</td>" & vbCrLf
+      Else
+        ErrorMessage("The Custom 4 field containing <b>'" & Custom4 & "'</b> has no User to associate with so will be ignored.", lineCounter, 2)
+        sOutputLabel = sOutputLabel & "<td class='Possible'>" & Custom4 & "</td>" & vbCrLf
+      End If
+      If EmployeeBudget = "" Then
+        sOutputLabel = sOutputLabel & "<td class='White'>-</td>" & vbCrLf
+      Else
+        ErrorMessage("The Employee Budget field containing <b>'" & EmployeeBudget & "'</b> has no User to associate with so will be ignored.", lineCounter, 2)
+        sOutputLabel = sOutputLabel & "<td class='Possible'>" & EmployeeBudget & "</td>" & vbCrLf
+      End If
+    Else
+      If sUserID = "" Then
+        If Email = "" Then
+          sOutputLabel = sOutputLabel & "<td class='white'>-</td>" & vbCrLf
+        Else
+          sOutputLabel = sOutputLabel & "<td class='New'>" & Email & "</td>" & vbCrLf
+        End If
+        If CostCode = "" Then
+          sOutputLabel = sOutputLabel & "<td class='white'>-</td>" & vbCrLf
+        Else
+          sOutputLabel = sOutputLabel & "<td class='New'>" & CostCode & "</td>" & vbCrLf
+        End If
+        If Custom1 = "" Then
+          sOutputLabel = sOutputLabel & "<td class='white'>-</td>" & vbCrLf
+        Else
+          sOutputLabel = sOutputLabel & "<td class='New'>" & Custom1 & "</td>" & vbCrLf
+        End If
+        If Custom2 = "" Then
+          sOutputLabel = sOutputLabel & "<td class='white'>-</td>" & vbCrLf
+        Else
+          sOutputLabel = sOutputLabel & "<td class='New'>" & Custom2 & "</td>" & vbCrLf
+        End If
+        If Custom3 = "" Then
+          sOutputLabel = sOutputLabel & "<td class='white'>-</td>" & vbCrLf
+        Else
+          sOutputLabel = sOutputLabel & "<td class='New'>" & Custom3 & "</td>" & vbCrLf
+        End If
+        If Custom4 = "" Then
+          sOutputLabel = sOutputLabel & "<td class='white'>-</td>" & vbCrLf
+        Else
+          sOutputLabel = sOutputLabel & "<td class='New'>" & Custom4 & "</td>" & vbCrLf
+        End If
+        If EmployeeBudget = "" Then
+          sOutputLabel = sOutputLabel & "<td class='white'>-</td>" & vbCrLf
+        Else
+          sOutputLabel = sOutputLabel & "<td class='New'>" & EmployeeBudget & "</td>" & vbCrLf
+        End If
+      Else
+        'check that User details match
+
+        mySelectQuery = "SELECT Email, CostCode, Custom1, Custom2, Custom3, Custom4, Budget FROM Users WHERE (UserID = "REDACTED")"
+        MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+        If MyConnection.State.ToString = "Closed" Then
+          MyConnection.Open()
+        End If
+        myReader = MyCommand.ExecuteReader()
+        myReader.Read()
+        If myReader("Email").ToString = Email Then
+          If Email = "" Then
+            Email = "-"
+          End If
+          sOutputLabel = sOutputLabel & "<td class='white'>" & Email & " </td>" & vbCrLf
+        Else
+          If Email = "" Then
+            Email = "-"
+          End If
+          sOutputLabel = sOutputLabel & "<td class='New'>" & Email & " </td>" & vbCrLf
+        End If
+        If myReader("CostCode").ToString = CostCode Then
+          If CostCode = "" Then
+            CostCode = "-"
+          End If
+          sOutputLabel = sOutputLabel & "<td class='white'>" & CostCode & " </td>" & vbCrLf
+        Else
+          If CostCode = "" Then
+            CostCode = "-"
+          End If
+          sOutputLabel = sOutputLabel & "<td class='New'>" & CostCode & " </td>" & vbCrLf
+        End If
+        If myReader("Custom1").ToString = Custom1 Then
+          If Custom1 = "" Then
+            Custom1 = "-"
+          End If
+          sOutputLabel = sOutputLabel & "<td class='white'>" & Custom1 & " </td>" & vbCrLf
+        Else
+          If Custom1 = "" Then
+            Custom1 = "-"
+          End If
+          sOutputLabel = sOutputLabel & "<td class='New'>" & Custom1 & " </td>" & vbCrLf
+        End If
+        If myReader("Custom2").ToString = Custom2 Then
+          If Custom2 = "" Then
+            Custom2 = "-"
+          End If
+          sOutputLabel = sOutputLabel & "<td class='white'>" & Custom2 & " </td>" & vbCrLf
+        Else
+          If Custom2 = "" Then
+            Custom2 = "-"
+          End If
+          sOutputLabel = sOutputLabel & "<td class='New'>" & Custom2 & " </td>" & vbCrLf
+        End If
+        If myReader("Custom3").ToString = Custom3 Then
+          If Custom3 = "" Then
+            Custom3 = "-"
+          End If
+          sOutputLabel = sOutputLabel & "<td class='white'>" & Custom3 & " </td>" & vbCrLf
+        Else
+          If Custom3 = "" Then
+            Custom3 = "-"
+          End If
+          sOutputLabel = sOutputLabel & "<td class='New'>" & Custom3 & " </td>" & vbCrLf
+        End If
+        If myReader("Custom4").ToString = Custom4 Then
+          If Custom4 = "" Then
+            Custom4 = "-"
+          End If
+          sOutputLabel = sOutputLabel & "<td class='white'>" & Custom4 & " </td>" & vbCrLf
+        Else
+          If Custom4 = "" Then
+            Custom4 = "-"
+          End If
+          sOutputLabel = sOutputLabel & "<td class='New'>" & Custom4 & " </td>" & vbCrLf
+        End If
+        If myReader("Budget").ToString = EmployeeBudget Then
+          If EmployeeBudget = "" Then
+            EmployeeBudget = "-"
+          End If
+          sOutputLabel = sOutputLabel & "<td class='white'>" & EmployeeBudget & " </td>" & vbCrLf
+        Else
+          If EmployeeBudget = "" Then
+            EmployeeBudget = "-"
+          End If
+          sOutputLabel = sOutputLabel & "<td class='New'>" & EmployeeBudget & " </td>" & vbCrLf
+        End If
+        myReader.Close()
+      End If
+    End If
+  End Sub
+  Sub PricessServiceOptions(ByVal NetworkType, ByVal ServiceNumber, ByVal Feature1, ByVal Feature2, ByVal Feature3, ByVal Feature4, ByVal Feature5, ByVal Feature6, ByVal Feature7, ByVal Feature8, ByVal Feature9, ByVal Feature0)
+    If ServiceNumber = "" Then
+      If NetworkType = "" Then
+        sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+      Else
+        ErrorMessage("The Network Type field containing <b>'" & NetworkType & "'</b> has no Service to associate with so will be ignored.", lineCounter, 2)
+        sOutputLabel = sOutputLabel & "<td class='Possible'>" & NetworkType & "</td>" & vbCrLf
+      End If
+      If Feature1 = "" Then
+        sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+      Else
+        ErrorMessage("The Feature1 field containing <b>'" & Feature1 & "'</b> has no Service to associate with so will be ignored.", lineCounter, 2)
+        sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>" & Feature1 & "</td>" & vbCrLf
+      End If
+      If Feature2 = "" Then
+        sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+      Else
+        ErrorMessage("The Feature2 field containing <b>'" & Feature2 & "'</b> has no Service to associate with so will be ignored.", lineCounter, 2)
+        sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>" & Feature2 & "</td>" & vbCrLf
+      End If
+      If Feature3 = "" Then
+        sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+      Else
+        ErrorMessage("The Feature3 field containing <b>'" & Feature3 & "'</b> has no Service to associate with so will be ignored.", lineCounter, 2)
+        sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>" & Feature3 & "</td>" & vbCrLf
+      End If
+      If Feature4 = "" Then
+        sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+      Else
+        ErrorMessage("The Feature4 field containing <b>'" & Feature4 & "'</b> has no Service to associate with so will be ignored.", lineCounter, 2)
+        sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>" & Feature4 & "</td>" & vbCrLf
+      End If
+      If Feature5 = "" Then
+        sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+      Else
+        ErrorMessage("The Feature5 field containing <b>'" & Feature5 & "'</b> has no Service to associate with so will be ignored.", lineCounter, 2)
+        sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>" & Feature5 & "</td>" & vbCrLf
+      End If
+      If Feature6 = "" Then
+        sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+      Else
+        ErrorMessage("The Feature6 field containing <b>'" & Feature6 & "'</b> has no Service to associate with so will be ignored.", lineCounter, 2)
+        sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>" & Feature6 & "</td>" & vbCrLf
+      End If
+      If Feature7 = "" Then
+        sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+      Else
+        ErrorMessage("The Feature7 field containing <b>'" & Feature7 & "'</b> has no Service to associate with so will be ignored.", lineCounter, 2)
+        sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>" & Feature7 & "</td>" & vbCrLf
+      End If
+      If Feature8 = "" Then
+        sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+      Else
+        ErrorMessage("The Feature8 field containing <b>'" & Feature8 & "'</b> has no Service to associate with so will be ignored.", lineCounter, 2)
+        sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>" & Feature8 & "</td>" & vbCrLf
+      End If
+      If Feature9 = "" Then
+        sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+      Else
+        ErrorMessage("The Feature9 field containing <b>'" & Feature9 & "'</b> has no Service to associate with so will be ignored.", lineCounter, 2)
+        sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>" & Feature9 & "</td>" & vbCrLf
+      End If
+      If Feature0 = "" Then
+        sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+      Else
+        ErrorMessage("The Feature0 field containing <b>'" & Feature0 & "'</b> has no Service to associate with so will be ignored.", lineCounter, 2)
+        sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>" & Feature0 & "</td>" & vbCrLf
+      End If
+    Else
+      If sServiceID = "" Then
+        'All New NetworkType
+        If NetworkType = "" Then
+          ErrorMessage("The Network Type field contains no values so will be ignored.", lineCounter, 2)
+          sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>-</td>" & vbCrLf
+        Else
+          sOutputLabel = sOutputLabel & "<td class='New'>" & NetworkType & "</td>" & vbCrLf
+        End If
+
+        If Feature1 = "" Then
+          ErrorMessage("The Feature1 field contains no values so will be ignored.", lineCounter, 2)
+          sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>-</td>" & vbCrLf
+        ElseIf LCase(Feature1) <> "y" And LCase(Feature1) <> "n" Then
+          ErrorMessage("The Feature1 field contains an invalid entry. Only Y or N are valid", lineCounter, 3)
+          sOutputLabel = sOutputLabel & "<td class='Critical' align='center'>" & Feature1 & "</td>" & vbCrLf
+        Else
+          sOutputLabel = sOutputLabel & "<td class='New' align='center'>" & Feature1 & "</td>" & vbCrLf
+        End If
+
+        If Feature2 = "" Then
+          ErrorMessage("The Feature2 field contains no values so will be ignored.", lineCounter, 2)
+          sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>-</td>" & vbCrLf
+        ElseIf LCase(Feature2) <> "y" And LCase(Feature2) <> "n" Then
+          ErrorMessage("The Feature2 field contains an invalid entry. Only Y or N are valid", lineCounter, 3)
+          sOutputLabel = sOutputLabel & "<td class='Critical' align='center'>" & Feature2 & "</td>" & vbCrLf
+        Else
+          sOutputLabel = sOutputLabel & "<td class='New' align='center'>" & Feature2 & "</td>" & vbCrLf
+        End If
+
+        If Feature3 = "" Then
+          ErrorMessage("The Feature3 field contains no values so will be ignored.", lineCounter, 2)
+          sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>-</td>" & vbCrLf
+        ElseIf LCase(Feature3) <> "y" And LCase(Feature3) <> "n" Then
+          ErrorMessage("The Feature3 field contains an invalid entry. Only Y or N are valid", lineCounter, 3)
+          sOutputLabel = sOutputLabel & "<td class='Critical' align='center'>" & Feature3 & "</td>" & vbCrLf
+        Else
+          sOutputLabel = sOutputLabel & "<td class='New' align='center'>" & Feature3 & "</td>" & vbCrLf
+        End If
+
+        If Feature4 = "" Then
+          ErrorMessage("The Feature4 field contains no values so will be ignored.", lineCounter, 2)
+          sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>-</td>" & vbCrLf
+        ElseIf LCase(Feature4) <> "y" And LCase(Feature4) <> "n" Then
+          ErrorMessage("The Feature4 field contains an invalid entry. Only Y or N are valid", lineCounter, 3)
+          sOutputLabel = sOutputLabel & "<td class='Critical' align='center'>" & Feature4 & "</td>" & vbCrLf
+        Else
+          sOutputLabel = sOutputLabel & "<td class='New' align='center'>" & Feature4 & "</td>" & vbCrLf
+        End If
+
+        If Feature5 = "" Then
+          ErrorMessage("The Feature5 field contains no values so will be ignored.", lineCounter, 2)
+          sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>-</td>" & vbCrLf
+        ElseIf LCase(Feature5) <> "y" And LCase(Feature5) <> "n" Then
+          ErrorMessage("The Feature5 field contains an invalid entry. Only Y or N are valid", lineCounter, 3)
+          sOutputLabel = sOutputLabel & "<td class='Critical' align='center'>" & Feature5 & "</td>" & vbCrLf
+        Else
+          sOutputLabel = sOutputLabel & "<td class='New' align='center'>" & Feature5 & "</td>" & vbCrLf
+        End If
+
+        If Feature6 = "" Then
+          ErrorMessage("The Feature6 field contains no values so will be ignored.", lineCounter, 2)
+          sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>-</td>" & vbCrLf
+        ElseIf LCase(Feature6) <> "y" And LCase(Feature6) <> "n" Then
+          ErrorMessage("The Feature6 field contains an invalid entry. Only Y or N are valid", lineCounter, 3)
+          sOutputLabel = sOutputLabel & "<td class='Critical' align='center'>" & Feature6 & "</td>" & vbCrLf
+        Else
+          sOutputLabel = sOutputLabel & "<td class='New' align='center'>" & Feature6 & "</td>" & vbCrLf
+        End If
+
+        If Feature7 = "" Then
+          ErrorMessage("The Feature7 field contains no values so will be ignored.", lineCounter, 2)
+          sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>-</td>" & vbCrLf
+        ElseIf LCase(Feature7) <> "y" And LCase(Feature7) <> "n" Then
+          ErrorMessage("The Feature7 field contains an invalid entry. Only Y or N are valid", lineCounter, 3)
+          sOutputLabel = sOutputLabel & "<td class='Critical' align='center'>" & Feature7 & "</td>" & vbCrLf
+        Else
+          sOutputLabel = sOutputLabel & "<td class='New' align='center'>" & Feature7 & "</td>" & vbCrLf
+        End If
+
+        If Feature8 = "" Then
+          ErrorMessage("The Feature8 field contains no values so will be ignored.", lineCounter, 2)
+          sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>-</td>" & vbCrLf
+        ElseIf LCase(Feature8) <> "y" And LCase(Feature8) <> "n" Then
+          ErrorMessage("The Feature8 field contains an invalid entry. Only Y or N are valid", lineCounter, 3)
+          sOutputLabel = sOutputLabel & "<td class='Critical' align='center'>" & Feature8 & "</td>" & vbCrLf
+        Else
+          sOutputLabel = sOutputLabel & "<td class='New' align='center'>" & Feature8 & "</td>" & vbCrLf
+        End If
+
+        If Feature9 = "" Then
+          ErrorMessage("The Feature9 field contains no values so will be ignored.", lineCounter, 2)
+          sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>-</td>" & vbCrLf
+        ElseIf LCase(Feature9) <> "y" And LCase(Feature9) <> "n" Then
+          ErrorMessage("The Feature9 field contains an invalid entry. Only Y or N are valid", lineCounter, 3)
+          sOutputLabel = sOutputLabel & "<td class='Critical' align='center'>" & Feature9 & "</td>" & vbCrLf
+        Else
+          sOutputLabel = sOutputLabel & "<td class='New' align='center'>" & Feature9 & "</td>" & vbCrLf
+        End If
+
+        If Feature0 = "" Then
+          ErrorMessage("The Feature0 field contains no values so will be ignored.", lineCounter, 2)
+          sOutputLabel = sOutputLabel & "<td class='Possible' align='center'>-</td>" & vbCrLf
+        ElseIf LCase(Feature0) <> "y" And LCase(Feature0) <> "n" Then
+          ErrorMessage("The Feature0 field contains an invalid entry. Only Y or N are valid", lineCounter, 3)
+          sOutputLabel = sOutputLabel & "<td class='Critical' align='center'>" & Feature0 & "</td>" & vbCrLf
+        Else
+          sOutputLabel = sOutputLabel & "<td class='New' align='center'>" & Feature0 & "</td>" & vbCrLf
+        End If
+      Else
+        'check for updates here
+        Dim NetworkTypeID As Integer
+
+        If NetworkType = "" Then
+          'critical error
+        Else
+          mySelectQuery = "SELECT UID FROM NetworkType WHERE (NetworkType = '" & NetworkType & "')"
+          MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+          If MyConnection.State.ToString = "Closed" Then
+            MyConnection.Open()
+          End If
+          myReader = MyCommand.ExecuteReader()
+          If myReader.Read() Then
+            'return UID for network type
+            NetworkTypeID = myReader("UID")
+          Else
+            'insert new uid
+            NetworkTypeID = -1
+          End If
+          myReader.Close()
+
+        End If
+
+        mySelectQuery = "SELECT NetworkTypeID, Feature1, Feature2, Feature3, Feature4, Feature5, Feature6, Feature7, Feature8, Feature9, Feature0 FROM Service WHERE (ClientID = " & sClientID & ") AND (ServiceNumber = '" & ServiceNumber & "') AND (ServiceID = " & sServiceID & ")"
+        Trace.Write(mySelectQuery)
+        Trace.Write(NetworkTypeID)
+        MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+        If MyConnection.State.ToString = "Closed" Then
+          MyConnection.Open()
+        End If
+        myReader = MyCommand.ExecuteReader()
+        myReader.Read()
+        If myReader("NetworkTypeID").ToString() = NetworkTypeID.ToString() Then
+          'no change
+          sOutputLabel = sOutputLabel & "<td class='white'>" & NetworkType & "</td>" & vbCrLf
+        Else
+          'New
+          sOutputLabel = sOutputLabel & "<td class='New'>" & NetworkType & "</td>" & vbCrLf
+        End If
+
+        ' FEATURE 1 Checking
+        If LCase(Feature1) = "y" Then
+          If myReader("Feature1") Then
+            'no change
+            sOutputLabel = sOutputLabel & "<td class='white' align='center'>Y</td>" & vbCrLf
+          Else
+            'changed
+            sOutputLabel = sOutputLabel & "<td class='New' align='center'>Y</td>" & vbCrLf
+          End If
+        ElseIf LCase(Feature1) = "n" Then
+          If Not myReader("Feature1") Then
+            'no change
+            sOutputLabel = sOutputLabel & "<td class='white' align='center'>N</td>" & vbCrLf
+          Else
+            'changed
+            sOutputLabel = sOutputLabel & "<td class='New' align='center'>N</td>" & vbCrLf
+          End If
+        ElseIf LCase(Feature1) = "" Then
+          sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+        Else
+          'invalid entry
+          ErrorMessage("The Feature1 field contains an invalid entry. Only Y or N are valid", lineCounter, 3)
+          sOutputLabel = sOutputLabel & "<td class='Critical' align='center'>" & Feature1 & "</td>" & vbCrLf
+        End If
+
+        ' FEATURE 2 Checking
+        If LCase(Feature2) = "y" Then
+          If myReader("Feature2") Then
+            'no change
+            sOutputLabel = sOutputLabel & "<td class='white' align='center'>Y</td>" & vbCrLf
+          Else
+            'changed
+            sOutputLabel = sOutputLabel & "<td class='New' align='center'>Y</td>" & vbCrLf
+          End If
+        ElseIf LCase(Feature2) = "n" Then
+          If Not myReader("Feature2") Then
+            'no change
+            sOutputLabel = sOutputLabel & "<td class='white' align='center'>N</td>" & vbCrLf
+          Else
+            'changed
+            sOutputLabel = sOutputLabel & "<td class='New' align='center'>N</td>" & vbCrLf
+          End If
+        ElseIf LCase(Feature2) = "" Then
+          sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+        Else
+          'invalid entry
+          ErrorMessage("The Feature 2 field contains an invalid entry. Only Y or N are valid", lineCounter, 3)
+          sOutputLabel = sOutputLabel & "<td class='Critical' align='center'>" & Feature2 & "</td>" & vbCrLf
+        End If
+
+        ' FEATURE 3 Checking
+        If LCase(Feature3) = "y" Then
+          If myReader("Feature3") Then
+            'no change
+            sOutputLabel = sOutputLabel & "<td class='white' align='center'>Y</td>" & vbCrLf
+          Else
+            'changed
+            sOutputLabel = sOutputLabel & "<td class='New' align='center'>Y</td>" & vbCrLf
+          End If
+        ElseIf LCase(Feature3) = "n" Then
+          If Not myReader("Feature3") Then
+            'no change
+            sOutputLabel = sOutputLabel & "<td class='white' align='center'>N</td>" & vbCrLf
+          Else
+            'changed
+            sOutputLabel = sOutputLabel & "<td class='New' align='center'>N</td>" & vbCrLf
+          End If
+        ElseIf LCase(Feature3) = "" Then
+          sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+        Else
+          'invalid entry
+          ErrorMessage("The Feature3 field contains an invalid entry. Only Y or N are valid", lineCounter, 3)
+          sOutputLabel = sOutputLabel & "<td class='Critical' align='center'>" & Feature3 & "</td>" & vbCrLf
+        End If
+
+        ' FEATURE 4 Checking
+        If LCase(Feature4) = "y" Then
+          If myReader("Feature4") Then
+            'no change
+            sOutputLabel = sOutputLabel & "<td class='white' align='center'>Y</td>" & vbCrLf
+          Else
+            'changed
+            sOutputLabel = sOutputLabel & "<td class='New' align='center'>Y</td>" & vbCrLf
+          End If
+        ElseIf LCase(Feature4) = "n" Then
+          If Not myReader("Feature4") Then
+            'no change
+            sOutputLabel = sOutputLabel & "<td class='white' align='center'>N</td>" & vbCrLf
+          Else
+            'changed
+            sOutputLabel = sOutputLabel & "<td class='New' align='center'>N</td>" & vbCrLf
+          End If
+        ElseIf LCase(Feature4) = "" Then
+          sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+        Else
+          'invalid entry
+          ErrorMessage("The Feature4 field contains an invalid entry. Only Y or N are valid", lineCounter, 3)
+          sOutputLabel = sOutputLabel & "<td class='Critical' align='center'>" & Feature4 & "</td>" & vbCrLf
+        End If
+
+        ' FEATURE 5 Checking
+        If LCase(Feature5) = "y" Then
+          If myReader("Feature5") Then
+            'no change
+            sOutputLabel = sOutputLabel & "<td class='white' align='center'>Y</td>" & vbCrLf
+          Else
+            'changed
+            sOutputLabel = sOutputLabel & "<td class='New' align='center'>Y</td>" & vbCrLf
+          End If
+        ElseIf LCase(Feature5) = "n" Then
+          If Not myReader("Feature5") Then
+            'no change
+            sOutputLabel = sOutputLabel & "<td class='white' align='center'>N</td>" & vbCrLf
+          Else
+            'changed
+            sOutputLabel = sOutputLabel & "<td class='New' align='center'>N</td>" & vbCrLf
+          End If
+        ElseIf LCase(Feature5) = "" Then
+          sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+        Else
+          'invalid entry
+          ErrorMessage("The Feature5 field contains an invalid entry. Only Y or N are valid", lineCounter, 3)
+          sOutputLabel = sOutputLabel & "<td class='Critical' align='center'>" & Feature5 & "</td>" & vbCrLf
+        End If
+
+        ' FEATURE 6 Checking
+        If LCase(Feature6) = "y" Then
+          If myReader("Feature6") Then
+            'no change
+            sOutputLabel = sOutputLabel & "<td class='white' align='center'>Y</td>" & vbCrLf
+          Else
+            'changed
+            sOutputLabel = sOutputLabel & "<td class='New' align='center'>Y</td>" & vbCrLf
+          End If
+        ElseIf LCase(Feature6) = "n" Then
+          If Not myReader("Feature6") Then
+            'no change
+            sOutputLabel = sOutputLabel & "<td class='white' align='center'>N</td>" & vbCrLf
+          Else
+            'changed
+            sOutputLabel = sOutputLabel & "<td class='New' align='center'>N</td>" & vbCrLf
+          End If
+        ElseIf LCase(Feature6) = "" Then
+          sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+        Else
+          'invalid entry
+          ErrorMessage("The Feature6 field contains an invalid entry. Only Y or N are valid", lineCounter, 3)
+          sOutputLabel = sOutputLabel & "<td class='Critical' align='center'>" & Feature6 & "</td>" & vbCrLf
+        End If
+
+        ' FEATURE 7 Checking
+        If LCase(Feature7) = "y" Then
+          If myReader("Feature7") Then
+            'no change
+            sOutputLabel = sOutputLabel & "<td class='white' align='center'>Y</td>" & vbCrLf
+          Else
+            'changed
+            sOutputLabel = sOutputLabel & "<td class='New' align='center'>Y</td>" & vbCrLf
+          End If
+        ElseIf LCase(Feature7) = "n" Then
+          If Not myReader("Feature7") Then
+            'no change
+            sOutputLabel = sOutputLabel & "<td class='white' align='center'>N</td>" & vbCrLf
+          Else
+            'changed
+            sOutputLabel = sOutputLabel & "<td class='New' align='center'>N</td>" & vbCrLf
+          End If
+        ElseIf LCase(Feature7) = "" Then
+          sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+        Else
+          'invalid entry
+          ErrorMessage("The Feature7 field contains an invalid entry. Only Y or N are valid", lineCounter, 3)
+          sOutputLabel = sOutputLabel & "<td class='Critical' align='center'>" & Feature7 & "</td>" & vbCrLf
+        End If
+
+        ' FEATURE 8 Checking
+        If LCase(Feature8) = "y" Then
+          If myReader("Feature8") Then
+            'no change
+            sOutputLabel = sOutputLabel & "<td class='white' align='center'>Y</td>" & vbCrLf
+          Else
+            'changed
+            sOutputLabel = sOutputLabel & "<td class='New' align='center'>Y</td>" & vbCrLf
+          End If
+        ElseIf LCase(Feature8) = "n" Then
+          If Not myReader("Feature8") Then
+            'no change
+            sOutputLabel = sOutputLabel & "<td class='white' align='center'>N</td>" & vbCrLf
+          Else
+            'changed
+            sOutputLabel = sOutputLabel & "<td class='New' align='center'>N</td>" & vbCrLf
+          End If
+        ElseIf LCase(Feature8) = "" Then
+          sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+        Else
+          'invalid entry
+          ErrorMessage("The Feature8 field contains an invalid entry. Only Y or N are valid", lineCounter, 3)
+          sOutputLabel = sOutputLabel & "<td class='Critical' align='center'>" & Feature8 & "</td>" & vbCrLf
+        End If
+
+        ' FEATURE 9 Checking
+        If LCase(Feature9) = "y" Then
+          If myReader("Feature9") Then
+            'no change
+            sOutputLabel = sOutputLabel & "<td class='white' align='center'>Y</td>" & vbCrLf
+          Else
+            'changed
+            sOutputLabel = sOutputLabel & "<td class='New' align='center'>Y</td>" & vbCrLf
+          End If
+        ElseIf LCase(Feature9) = "n" Then
+          If Not myReader("Feature9") Then
+            'no change
+            sOutputLabel = sOutputLabel & "<td class='white' align='center'>N</td>" & vbCrLf
+          Else
+            'changed
+            sOutputLabel = sOutputLabel & "<td class='New' align='center'>N</td>" & vbCrLf
+          End If
+        ElseIf LCase(Feature9) = "" Then
+          sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+        Else
+          'invalid entry
+          ErrorMessage("The Feature9 field contains an invalid entry. Only Y or N are valid", lineCounter, 3)
+          sOutputLabel = sOutputLabel & "<td class='Critical' align='center'>" & Feature9 & "</td>" & vbCrLf
+        End If
+
+        ' FEATURE 0 Checking
+        If LCase(Feature0) = "y" Then
+          If myReader("Feature0") Then
+            'no change
+            sOutputLabel = sOutputLabel & "<td class='white' align='center'>Y</td>" & vbCrLf
+          Else
+            'changed
+            sOutputLabel = sOutputLabel & "<td class='New' align='center'>Y</td>" & vbCrLf
+          End If
+        ElseIf LCase(Feature0) = "n" Then
+          If Not myReader("Feature0") Then
+            'no change
+            sOutputLabel = sOutputLabel & "<td class='white' align='center'>N</td>" & vbCrLf
+          Else
+            'changed
+            sOutputLabel = sOutputLabel & "<td class='New' align='center'>N</td>" & vbCrLf
+          End If
+        ElseIf LCase(Feature0) = "" Then
+          sOutputLabel = sOutputLabel & "<td class='white' align='center'>-</td>" & vbCrLf
+        Else
+          'invalid entry
+          ErrorMessage("The Feature0 field contains an invalid entry. Only Y or N are valid", lineCounter, 3)
+          sOutputLabel = sOutputLabel & "<td class='Critical' align='center'>" & Feature0 & "</td>" & vbCrLf
+        End If
+        myReader.Close()
+      End If
+
+    End If
+
+  End Sub
+  Function CheckArraySize(ByVal thisLine)
+    Dim arrayLength As Integer
+    Dim tempStr As String
+    Dim i As Integer = 0
+    Dim RequiredLength As Integer
+    RequiredLength = Feature0COL + (noAssets * 6)
+    arrayLength = UBound(thisLine)
+    If arrayLength < RequiredLength Then
+      tempStr = thisLine(0)
+      For i = 1 To arrayLength
+        tempStr = tempStr & "," & thisLine(i)
+      Next
+      For i = 0 To (RequiredLength - arrayLength)
+        tempStr = tempStr & ","
+      Next
+      Return Split(tempStr, ",", -1, 1)
+    Else
+      Return thisLine
+    End If
+  End Function
+  Sub CheckAssetCount(ByVal arrayLength)
+    noAssets = Math.Ceiling((arrayLength - Feature0COL) / 6)
+    If noAssets < 0 Then
+      noAssets = 0
+    End If
+  End Sub
+  Sub ProcessAssets(ByVal lineArray As Array)
+    Dim i As Integer = 0
+    Dim assetCounter As Integer
+    assetCounter = 0
+    Dim invalid As Boolean
+    Dim AssetType As Integer
+    Dim AssetManafacturer As Integer
+    Dim AssetList As Integer
+    invalid = False
+    If noAssets > 0 Then
+      For i = 0 To noAssets - 1
+        assetCounter = (i * 6)
+        If lineArray(AssetTypeCOL + assetCounter) = "" And lineArray(AssetManafacturerCOL + assetCounter) = "" And lineArray(AssetNameCOL + assetCounter) = "" Then
+          'output blank asset
+          sOutputLabel = sOutputLabel & "<td class='white' colspan='6'>-</td>" & vbCrLf
+        Else
+          If lineArray(AssetTypeCOL + assetCounter) = "" Then
+            ErrorMessage("Asset Type is required, The asset will be ignored.", lineCounter, 2)
+            sOutputLabel = sOutputLabel & "<td class='Possible'>-</td>" & vbCrLf
+            invalid = True
+          Else
+            mySelectQuery = "SELECT AssetTypeID FROM AssetType WHERE (EndDate IS NULL) AND (AssetTypeName = '" & lineArray(AssetTypeCOL + assetCounter) & "')"
+            MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+            If MyConnection.State.ToString = "Closed" Then
+              MyConnection.Open()
+            End If
+            myReader = MyCommand.ExecuteReader()
+            If myReader.Read() Then
+              sOutputLabel = sOutputLabel & "<td class='white'>" & lineArray(AssetTypeCOL + assetCounter) & "</td>" & vbCrLf
+              AssetType = myReader("AssetTypeID")
+            Else
+              ErrorMessage("Asset Type '" & lineArray(AssetTypeCOL + assetCounter) & "' is invalid.", lineCounter, 3)
+              sOutputLabel = sOutputLabel & "<td class='critical'>" & lineArray(AssetTypeCOL + assetCounter) & "</td>" & vbCrLf
+            End If
+            myReader.Close()
+
+          End If
+          If lineArray(AssetManafacturerCOL + assetCounter) = "" Then
+            ErrorMessage("Manafacturer is required, The asset will be ignored.", lineCounter, 2)
+            sOutputLabel = sOutputLabel & "<td class='Possible'>-</td>" & vbCrLf
+            invalid = True
+          Else
+            mySelectQuery = "SELECT AssetManufacturerID FROM AssetManufacturer WHERE (EndDate IS NULL) AND (ManufacturerName = '" & lineArray(AssetManafacturerCOL + assetCounter) & "')"
+            MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+            If MyConnection.State.ToString = "Closed" Then
+              MyConnection.Open()
+            End If
+            myReader = MyCommand.ExecuteReader()
+            If myReader.Read() Then
+              sOutputLabel = sOutputLabel & "<td class='white'>" & lineArray(AssetManafacturerCOL + assetCounter) & "</td>" & vbCrLf
+              AssetManafacturer = myReader("AssetManufacturerID")
+            Else
+              ErrorMessage("Asset Manufacturer '" & lineArray(AssetManafacturerCOL + assetCounter) & "' is invalid.", lineCounter, 3)
+              sOutputLabel = sOutputLabel & "<td class='critical'>" & lineArray(AssetManafacturerCOL + assetCounter) & "</td>" & vbCrLf
+            End If
+            myReader.Close()
+          End If
+          If lineArray(AssetNameCOL + assetCounter) = "" Then
+            ErrorMessage("Name is required, The asset will be ignored.", lineCounter, 2)
+            sOutputLabel = sOutputLabel & "<td class='Possible'>-</td>" & vbCrLf
+            invalid = True
+          Else
+            If invalid Then
+              sOutputLabel = sOutputLabel & "<td class='possible'>" & lineArray(AssetNameCOL + assetCounter) & "</td>" & vbCrLf
+            Else
+              mySelectQuery = "SELECT AssetListID FROM AssetList WHERE (AssetName = '" & lineArray(AssetNameCOL + assetCounter) & "') AND (AssetTypeID = " & AssetType & ") AND (AssetManufacturerID = " & AssetManafacturer & ") AND (EndDate IS NULL)"
+              MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+              If MyConnection.State.ToString = "Closed" Then
+                MyConnection.Open()
+              End If
+              myReader = MyCommand.ExecuteReader()
+              If myReader.Read() Then
+                sOutputLabel = sOutputLabel & "<td class='white'>" & lineArray(AssetNameCOL + assetCounter) & "</td>" & vbCrLf
+                AssetList = myReader("AssetListID")
+              Else
+                'new
+                sOutputLabel = sOutputLabel & "<td class='New'>" & lineArray(AssetNameCOL + assetCounter) & "</td>" & vbCrLf
+              End If
+              myReader.Close()
+            End If
+          End If
+          If lineArray(IMEESNNumberCOL + assetCounter) = "" Then
+            sOutputLabel = sOutputLabel & "<td class='white'>-</td>" & vbCrLf
+            If lineArray(AssetNumberCOL + assetCounter) = "" Then
+              sOutputLabel = sOutputLabel & "<td class='white'>-</td>" & vbCrLf
+            Else
+              sOutputLabel = sOutputLabel & "<td class='New'>" & lineArray(AssetNumberCOL + assetCounter) & "</td>" & vbCrLf
+            End If
+            If lineArray(SerialNumberCOL + assetCounter) = "" Then
+              sOutputLabel = sOutputLabel & "<td class='white'>-</td>" & vbCrLf
+            Else
+              sOutputLabel = sOutputLabel & "<td class='New'>" & lineArray(SerialNumberCOL + assetCounter) & "</td>" & vbCrLf
+            End If
+          Else
+            Dim UserString As String
+            Dim ServiceString As String
+            Dim ClientString As String
+            If sUserID = "" Then
+              UserString = ""
+            Else
+              UserString = " AND (UserID = "REDACTED")"
+            End If
+            If sServiceID = "" Then
+              ServiceString = ""
+            Else
+              ServiceString = " AND (ServiceID = " & sServiceID & ")"
+            End If
+            If sClientID = "" Then
+
+            End If
+            mySelectQuery = "SELECT IMENumber, AssetNumber, SerialNumber FROM Asset WHERE (AssetlistID = " & AssetList & ")" & UserString & ServiceString & " AND (ClientID = " & sClientID & ") AND (EndDate IS NULL)"
+            MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+            If MyConnection.State.ToString = "Closed" Then
+              MyConnection.Open()
+            End If
+            myReader = MyCommand.ExecuteReader()
+            If myReader.Read() Then
+              sOutputLabel = sOutputLabel & "<td class='white'>" & lineArray(IMEESNNumberCOL + assetCounter) & "</td>" & vbCrLf
+              sOutputLabel = sOutputLabel & "<td class='white'>" & lineArray(AssetNumberCOL + assetCounter) & "</td>" & vbCrLf
+              sOutputLabel = sOutputLabel & "<td class='white'>" & lineArray(SerialNumberCOL + assetCounter) & "</td>" & vbCrLf
+            Else
+              sOutputLabel = sOutputLabel & "<td class='New'>" & lineArray(IMEESNNumberCOL + assetCounter) & "</td>" & vbCrLf
+              sOutputLabel = sOutputLabel & "<td class='New'>" & lineArray(AssetNumberCOL + assetCounter) & "</td>" & vbCrLf
+              sOutputLabel = sOutputLabel & "<td class='New'>" & lineArray(SerialNumberCOL + assetCounter) & "</td>" & vbCrLf
+            End If
+            myReader.Close()
+          End If
+        End If
+      Next
+    End If
+  End Sub
+  Sub SetColCount()
+    ServiceNumberCOL = sOrgLevels + 1
+    FirstNameCOL = sOrgLevels + 2
+    LastNameCOL = sOrgLevels + 3
+    CarrierNameCOL = sOrgLevels + 4
+    'ServiceTypeCOL = serviceTypeCOL + 5
+    AccountNumberCOL = sOrgLevels + 6
+    RatePlanCOL = sOrgLevels + 7
+    ContractEndDateCOL = sOrgLevels + 8
+    PhoneUserEmailCOL = sOrgLevels + 9
+    CostCodeCOL = sOrgLevels + 10
+    Custom1COL = sOrgLevels + 11
+    Custom2COL = sOrgLevels + 12
+    Custom3COL = sOrgLevels + 13
+    Custom4COL = sOrgLevels + 14
+    EmployeeBudgetCOL = sOrgLevels + 15
+    NetworkTypeCOL = sOrgLevels + 16
+    Feature1COL = sOrgLevels + 17
+    Feature2COL = sOrgLevels + 18
+    Feature3COL = sOrgLevels + 19
+    Feature4COL = sOrgLevels + 20
+    Feature5COL = sOrgLevels + 21
+    Feature6COL = sOrgLevels + 22
+    Feature7COL = sOrgLevels + 23
+    Feature8COL = sOrgLevels + 24
+    Feature9COL = sOrgLevels + 25
+    Feature0COL = sOrgLevels + 26
+
+    AssetTypeCOL = sOrgLevels + 27
+    AssetManafacturerCOL = sOrgLevels + 28
+    AssetNameCOL = sOrgLevels + 29
+    IMEESNNumberCOL = sOrgLevels + 30
+    AssetNumberCOL = sOrgLevels + 31
+    SerialNumberCOL = sOrgLevels + 32
+
+  End Sub
+  Sub ErrorMessage(ByVal ErrorText, ByVal ErrorLine, ByVal ErrorType)
+    Dim ErrorColor As String
+    Dim sErrorType As String
+    If ErrorType = 3 Then
+      sErrorType = "Critical "
+      ErrorColor = "#ff0000"
+      CriticalError = True
+      'hlProcess.Visible = False
+    ElseIf ErrorType = 2 Then
+      sErrorType = "Possible "
+      ErrorColor = "#ff6633"
+    End If
+    lblStatis.Text = lblStatis.Text & "<font color='" & ErrorColor & "'><b>" & sErrorType & "Error :</b></font> " & ErrorText & "  <font color='" & ErrorColor & "'><b>On Line :</b></font> <a href='#" & ErrorLine & "'>" & ErrorLine & "</a><br>" & vbCrLf
+  End Sub
+End Class

@@ -1,0 +1,565 @@
+Public Class AssetExport
+    Inherits System.Web.UI.Page
+
+#Region " Web Form Designer Generated Code "
+
+    'This call is required by the Web Form Designer.
+    <System.Diagnostics.DebuggerStepThrough()> Private Sub InitializeComponent()
+
+    End Sub
+    Protected WithEvents ddlClientSelect As System.Web.UI.WebControls.DropDownList
+    Protected WithEvents lblStatus As System.Web.UI.WebControls.Label
+    Protected WithEvents DropDownList1 As System.Web.UI.WebControls.DropDownList
+    Protected WithEvents ddlFileType As System.Web.UI.WebControls.DropDownList
+    Protected WithEvents DownloadXML As System.Web.UI.WebControls.Button
+    Protected WithEvents RequiredFieldValidator1 As System.Web.UI.WebControls.RequiredFieldValidator
+
+    'Extra Variables
+    Dim mySqlDataReader As System.Data.SqlClient.SqlDataReader
+    Dim MyConnection As System.Data.SqlClient.SqlConnection
+    Dim MyConnection2 As System.Data.SqlClient.SqlConnection
+    Dim mySelectQuery As String
+    Dim myReader As System.Data.SqlClient.SqlDataReader
+    Dim myReader2 As System.Data.SqlClient.SqlDataReader
+    Dim MyCommand As New System.Data.SqlClient.SqlCommand
+    Dim FileLocation As String
+    Dim file As System.IO.StreamWriter
+    'Dim aLine() As String = (1,2,3)
+    Dim ds As DataSet = New DataSet("AssetExport")
+    Dim t As DataTable = ds.Tables.Add("Assets")
+    Dim OrgUnitLevels As String
+    Dim AssetCount As String
+    Dim sFileName As String
+
+    Dim sLine As String
+    Dim aLine() As String
+
+    'NOTE: The following placeholder declaration is required by the Web Form Designer.
+    'Do not delete or move it.
+    Private designerPlaceholderDeclaration As System.Object
+
+    Private Sub Page_Init(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Init
+        'CODEGEN: This method call is required by the Web Form Designer
+        'Do not modify it using the code editor.
+        InitializeComponent()
+    End Sub
+
+#End Region
+    Private Sub Page_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
+        'Put user code to initialize the page here
+        MyConnection = New System.Data.SqlClient.SqlConnection(Session("OperationalDB"))
+        MyConnection2 = New System.Data.SqlClient.SqlConnection(Session("OperationalDB"))
+        MyCommand.CommandTimeout = 60
+        If Not IsPostBack Then
+            Call LoadClients()
+        End If
+    End Sub
+    Sub LoadClients()
+        ddlClientSelect.Items.Add(New ListItem("Please Select a Client", "-1"))
+    mySelectQuery = "SELECT ClientID, Clientname FROM Client WHERE (EndDate IS NULL)"
+        MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+        If MyConnection.State.ToString = "Closed" Then
+            MyConnection.Open()
+        End If
+        myReader = MyCommand.ExecuteReader()
+        If myReader.HasRows Then
+            Do While myReader.Read()
+                ddlClientSelect.Items.Add(New ListItem(myReader("Clientname"), myReader("ClientID")))
+            Loop
+        End If
+        myReader.Close()
+    End Sub
+    Sub ExportClientAssets(ByVal sClientID, ByVal FileType)
+        Dim ClientName As String
+        ClientName = ddlClientSelect.SelectedItem.Text.ToString()
+        Call fileName(ClientName, FileType)
+
+        Dim OrgUnitLevels As Integer
+        Dim AssetCount As Integer
+        'get org unit levels
+        OrgUnitLevels = GetOrgUnitLevels(sClientID)
+        If OrgUnitLevels = 0 Then
+            lblStatus.Text = "Can not Export a client with no org units" & vbCrLf
+        Else
+            'get number of assets
+            AssetCount = GetAssetNumbers(sClientID)
+            lblStatus.Text = "<br>Org Unit Levels: " & OrgUnitLevels & "<br> Asset Coutner : " & AssetCount & vbCrLf
+            Call InsertDSHeadders(OrgUnitLevels, AssetCount)
+            Call ExportUsers(sClientID, OrgUnitLevels, AssetCount)
+
+            'select remaining services, process per service
+
+        End If
+
+    End Sub
+    Sub fileName(ByVal ClientName, ByVal FileType)
+        sFileName = ClientName & "-"
+
+        If Day(Now) < 10 Then
+            sFileName = sFileName & "0" & Day(Now)
+        Else
+            sFileName = sFileName & Day(Now)
+        End If
+        If Month(Now) < 10 Then
+            sFileName = sFileName & "0" & Month(Now)
+        Else
+            sFileName = sFileName & Month(Now)
+        End If
+        sFileName = sFileName & Year(Now) & "-"
+        If Hour(Now) < 10 Then
+            sFileName = sFileName & "0" & Hour(Now)
+        Else
+            sFileName = sFileName & Hour(Now)
+        End If
+        If Minute(Now) < 10 Then
+            sFileName = sFileName & "0" & Minute(Now)
+        Else
+            sFileName = sFileName & Minute(Now)
+        End If
+        If Second(Now) < 10 Then
+            sFileName = sFileName & "0" & Second(Now)
+        Else
+            sFileName = sFileName & Second(Now)
+        End If
+
+        sFileName = sFileName & "-" & Session("UsersName")
+
+        'Either CSV(.txt) or XML(.xml)
+        If FileType = 1 Then
+            sFileName = sFileName & ".txt"
+        ElseIf FileType = 2 Then
+            sFileName = sFileName & ".xml"
+        End If
+
+    End Sub
+    Function GetOrgUnitLevels(ByVal sClientID)
+        Dim sLevels As Integer
+        mySelectQuery = "SELECT DISTINCT TOP 1 OrgUnitLevel FROM ClientOrganisationUnit WHERE (EndDate IS NULL) AND (ClientID = " & sClientID & ") ORDER BY OrgUnitLevel DESC"
+        'Trace.Write(mySelectQuery)
+        MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+        If MyConnection.State.ToString = "Closed" Then
+            MyConnection.Open()
+        End If
+        myReader = MyCommand.ExecuteReader()
+        If myReader.Read() Then
+            sLevels = myReader("OrgUnitLevel")
+        Else
+            sLevels = 0
+        End If
+        myReader.Close()
+        Return sLevels
+    End Function
+    Function GetAssetNumbers(ByVal sClientID)
+        Dim sCount As Integer
+        mySelectQuery = "SELECT TOP 1 COUNT(DISTINCT UID) AS Assets, UserID, ServiceID FROM Asset WHERE (ClientID = " & sClientID & ") AND (EndDate IS NULL) GROUP BY UserID, ServiceID ORDER BY COUNT(DISTINCT UID) DESC"
+        'Trace.Write(mySelectQuery)
+        MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+        If MyConnection.State.ToString = "Closed" Then
+            MyConnection.Open()
+        End If
+        myReader = MyCommand.ExecuteReader()
+        If myReader.Read() Then
+            sCount = myReader("Assets")
+        Else
+            sCount = 0
+        End If
+        myReader.Close()
+        Return sCount
+    End Function
+    Sub InsertCSVHeadders(ByVal OrgUnitLevels, ByVal AssetCount)
+
+        Dim titleString As String
+        Dim i As Integer
+        Dim j As Integer
+
+        For i = 1 To OrgUnitLevels
+            titleString = titleString & "Org Lvl " & i & ","
+        Next
+
+        titleString = titleString & "Destination Org Unit,Service Number,First Name,Last Name,Carrier,Service Type,Account Number,Rate Plan,Contract End Date,Email,Cost Code,Custom1,Custom2,Custom3,Custmo4,Employee Budget,Network Type,Feature1,Feature2,Feature3,Feature4,Feature5,Feature6,Feature7,Feature8,Feature9,Feature0"
+
+        For j = 1 To AssetCount
+            titleString = titleString & ",Asset Type,Asset Manufacturer,Asset Name,IMEI / ESN / MAC Number,Asset Number,Serial Number"
+        Next
+
+        Response.Write(",,,,," & vbCrLf)
+        Response.Write(titleString & vbCrLf)
+    End Sub
+    Sub InsertDSHeadders(ByVal OrgUnitLevels, ByVal AssetCount)
+        ' Create a DataSet with one table containing two columns and 10 rows.
+        Trace.Write("Blah")
+        Dim titleString As String
+        Dim i As Integer
+        Dim j As Integer
+
+        For i = 1 To CInt(OrgUnitLevels)
+            t.Columns.Add("Org Lvl " & i, Type.GetType("System.String"))
+        Next
+
+        t.Columns.Add("Destination Org Unit", Type.GetType("System.String"))
+        t.Columns.Add("Service Number", Type.GetType("System.String"))
+        t.Columns.Add("First Name", Type.GetType("System.String"))
+        t.Columns.Add("Last Name", Type.GetType("System.String"))
+        t.Columns.Add("Carrier", Type.GetType("System.String"))
+        t.Columns.Add("Service Type", Type.GetType("System.String"))
+        t.Columns.Add("Account Number", Type.GetType("System.String"))
+        t.Columns.Add("Rate Plan", Type.GetType("System.String"))
+        t.Columns.Add("Contract End Date", Type.GetType("System.String"))
+        t.Columns.Add("Email", Type.GetType("System.String"))
+        t.Columns.Add("Cost Code", Type.GetType("System.String"))
+        t.Columns.Add("Custom1", Type.GetType("System.String"))
+        t.Columns.Add("Custom2", Type.GetType("System.String"))
+        t.Columns.Add("Custom3", Type.GetType("System.String"))
+        t.Columns.Add("Custmo4", Type.GetType("System.String"))
+        t.Columns.Add("Employee Budget", Type.GetType("System.String"))
+        t.Columns.Add("Network Type", Type.GetType("System.String"))
+        t.Columns.Add("Feature1", Type.GetType("System.String"))
+        t.Columns.Add("Feature2", Type.GetType("System.String"))
+        t.Columns.Add("Feature3", Type.GetType("System.String"))
+        t.Columns.Add("Feature4", Type.GetType("System.String"))
+        t.Columns.Add("Feature5", Type.GetType("System.String"))
+        t.Columns.Add("Feature6", Type.GetType("System.String"))
+        t.Columns.Add("Feature7", Type.GetType("System.String"))
+        t.Columns.Add("Feature8", Type.GetType("System.String"))
+        t.Columns.Add("Feature9", Type.GetType("System.String"))
+        t.Columns.Add("Feature0", Type.GetType("System.String"))
+
+        For j = 0 To CInt(AssetCount) - 1
+            t.Columns.Add("Asset Type " & j + 1, Type.GetType("System.String"))
+            t.Columns.Add("Asset Manufacturer " & j + 1, Type.GetType("System.String"))
+            t.Columns.Add("Asset Name " & j + 1, Type.GetType("System.String"))
+            t.Columns.Add("IMEI/ESN/MAC Number " & j + 1, Type.GetType("System.String"))
+            t.Columns.Add("Asset Number " & j + 1, Type.GetType("System.String"))
+            t.Columns.Add("Serial Number " & j + 1, Type.GetType("System.String"))
+        Next
+
+    End Sub
+    Sub ExportUsers(ByVal sClientID, ByVal OrgUnitLevels, ByVal AssetCount)
+        'get the user's details
+        Dim destinationOrg As String
+        Dim orgParentID As Integer
+        mySelectQuery = "SELECT DISTINCT Users.OrgUnitID, Users.UserID, Users.FirstName, Users.LastName, Users.Email, Users.CostCode, Users.Custom1, Users.Custom2, Users.Custom3, Users.Custom4, Users.Budget, Service.ServiceNumber, Service.ServiceProviderID, Service.ServiceType, Service.ProviderAccountNumber, Service.PlanID, Service.ContractEndDate, Service.NetworkTypeID, Service.Feature1, Service.Feature2, Service.Feature3, Service.Feature4, Service.Feature5, Service.Feature6, Service.Feature7, Service.Feature8, Service.Feature9, Service.Feature0 FROM Users LEFT OUTER JOIN Service ON Users.UserID =REDACTED WHERE (Users.ClientID = " & sClientID & ") AND (Users.EndDate IS NULL) AND (Service.EndDate IS NULL) AND (Service.ClientID = " & sClientID & ")"
+        MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+        If MyConnection.State.ToString = "Closed" Then
+            MyConnection.Open()
+        End If
+        myReader = MyCommand.ExecuteReader()
+        Dim i As Integer
+        While myReader.Read()
+            Dim sTemp As String
+            Dim aTemp() As String
+            Dim TempOrg As Integer
+            Dim sSpacer As String
+
+            orgParentID = myReader("OrgUnitID")
+            For i = 1 To OrgUnitLevels
+                mySelectQuery = "SELECT OrgUnitName, OrgUnitParent FROM ClientOrganisationUnit WHERE (ClientID = " & sClientID & ") AND (OrgUnitID = " & orgParentID & ")"
+                MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection2)
+                If MyConnection2.State.ToString = "Closed" Then
+                    MyConnection2.Open()
+                End If
+                myReader2 = MyCommand.ExecuteReader()
+                If myReader2.Read() Then
+                    orgParentID = myReader2("OrgUnitParent")
+                    sTemp = sTemp & myReader2("OrgUnitName") & ","
+                    If i = 1 Then
+                        destinationOrg = myReader2("OrgUnitName")
+                    End If
+                Else
+                    sTemp = sTemp & ","
+                End If
+
+                myReader2.Close()
+            Next
+
+            aTemp = Split(sTemp, ",")
+            Array.Reverse(aTemp)
+            sTemp = ""
+            sSpacer = ""
+            For i = 1 To UBound(aTemp)
+                If aTemp(i) <> "" Then
+                    sTemp = sTemp & aTemp(i) & ","
+                Else
+                    sSpacer = sSpacer & ","
+                End If
+            Next
+            sLine = sTemp & sSpacer
+            sTemp = ""
+            sSpacer = ""
+
+            sLine = sLine & destinationOrg & ","
+            sLine = sLine & myReader("ServiceNumber") & ","
+            sLine = sLine & myReader("FirstName") & ","
+            sLine = sLine & myReader("LastName") & ","
+            'carrier
+            mySelectQuery = "SELECT ProviderName, ServiceType FROM ServiceProvider WHERE (UID = "REDACTED"ServiceProviderID") & ")"
+            MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection2)
+            If MyConnection2.State.ToString = "Closed" Then
+                MyConnection2.Open()
+            End If
+            myReader2 = MyCommand.ExecuteReader()
+            If myReader2.Read() Then
+                sLine = sLine & myReader2("ProviderName") & ","
+            Else
+                sLine = sLine & ","
+            End If
+
+            myReader2.Close()
+            'Service Type ServiceType
+            mySelectQuery = "SELECT Description FROM ServiceType WHERE (UID = "REDACTED"ServiceType") & ")"
+            MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection2)
+            If MyConnection2.State.ToString = "Closed" Then
+                MyConnection2.Open()
+            End If
+            myReader2 = MyCommand.ExecuteReader()
+            If myReader2.Read() Then
+                sLine = sLine & myReader2("Description") & ","
+            Else
+                sLine = sLine & ","
+            End If
+
+            myReader2.Close()
+
+            sLine = sLine & myReader("ProviderAccountNumber") & ","
+            'PlanID 
+            mySelectQuery = "SELECT PlanName FROM ServiceProviderPlans WHERE (UID = "REDACTED"PlanID") & ")"
+            MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection2)
+            If MyConnection2.State.ToString = "Closed" Then
+                MyConnection2.Open()
+            End If
+            myReader2 = MyCommand.ExecuteReader()
+            If myReader2.Read() Then
+                sLine = sLine & myReader2("PlanName") & ","
+            Else
+                sLine = sLine & ","
+            End If
+
+            myReader2.Close()
+
+            sLine = sLine & myReader("ContractEndDate") & ","
+            sLine = sLine & myReader("Email") & ","
+            sLine = sLine & myReader("CostCode") & ","
+            sLine = sLine & myReader("Custom1") & ","
+            sLine = sLine & myReader("Custom2") & ","
+            sLine = sLine & myReader("Custom3") & ","
+            sLine = sLine & myReader("Custom4") & ","
+            sLine = sLine & myReader("Budget") & ","
+            'Network Type
+            mySelectQuery = "SELECT NetworkType FROM NetworkType WHERE (UID = '" & myReader("NetworkTypeID") & "')"
+            MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection2)
+            If MyConnection2.State.ToString = "Closed" Then
+                MyConnection2.Open()
+            End If
+            myReader2 = MyCommand.ExecuteReader()
+            If myReader2.Read() Then
+                sLine = sLine & myReader2("NetworkType") & ","
+            Else
+                sLine = sLine & ","
+            End If
+
+            myReader2.Close()
+
+            If myReader("Feature1").ToString() = "1" Then
+                sLine = sLine & "Y,"
+            Else
+                sLine = sLine & "N,"
+            End If
+            If myReader("Feature2").ToString() = "1" Then
+                sLine = sLine & "Y,"
+            Else
+                sLine = sLine & "N,"
+            End If
+            If myReader("Feature3").ToString() = "1" Then
+                sLine = sLine & "Y,"
+            Else
+                sLine = sLine & "N,"
+            End If
+            If myReader("Feature4").ToString() = "1" Then
+                sLine = sLine & "Y,"
+            Else
+                sLine = sLine & "N,"
+            End If
+            If myReader("Feature5").ToString() = "1" Then
+                sLine = sLine & "Y,"
+            Else
+                sLine = sLine & "N,"
+            End If
+            If myReader("Feature6").ToString() = "1" Then
+                sLine = sLine & "Y,"
+            Else
+                sLine = sLine & "N,"
+            End If
+            If myReader("Feature7").ToString() = "1" Then
+                sLine = sLine & "Y,"
+            Else
+                sLine = sLine & "N,"
+            End If
+            If myReader("Feature8").ToString() = "1" Then
+                sLine = sLine & "Y,"
+            Else
+                sLine = sLine & "N,"
+            End If
+            If myReader("Feature9").ToString() = "1" Then
+                sLine = sLine & "Y,"
+            Else
+                sLine = sLine & "N,"
+            End If
+            If myReader("Feature0").ToString() = "1" Then
+                sLine = sLine & "Y,"
+            Else
+                sLine = sLine & "N,"
+            End If
+
+            If AssetCount > 0 Then
+                Dim AssetDone As Integer
+                AssetDone = 0
+                mySelectQuery = "SELECT Asset.UserID, Asset.ServiceID, AssetType.AssetTypeName, AssetManufacturer.ManufacturerName, AssetList.AssetName, Asset.IMENumber, Asset.AssetNumber, Asset.SerialNumber FROM Asset INNER JOIN AssetList ON Asset.AssetlistID = AssetList.AssetListID INNER JOIN AssetType ON AssetList.AssetTypeID = AssetType.AssetTypeID INNER JOIN AssetManufacturer ON AssetList.AssetManufacturerID = AssetManufacturer.AssetManufacturerID WHERE (Asset.EndDate IS NULL) AND (Asset.ClientID = " & sClientID & ") AND (AssetList.EndDate IS NULL) AND (AssetType.EndDate IS NULL) AND (AssetManufacturer.EndDate IS NULL) AND (Asset.UserID = "REDACTED"UserID") & ")"
+                'Trace.Write(mySelectQuery)
+                MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection2)
+                If MyConnection2.State.ToString = "Closed" Then
+                    MyConnection2.Open()
+                End If
+                myReader2 = MyCommand.ExecuteReader()
+                While myReader2.Read()
+                    AssetDone = AssetDone + 1
+                    sLine = sLine & myReader2("AssetTypeName") & ","
+                    sLine = sLine & myReader2("ManufacturerName") & ","
+                    sLine = sLine & myReader2("AssetName") & ","
+                    sLine = sLine & myReader2("IMENumber") & ","
+                    sLine = sLine & myReader2("AssetNumber") & ","
+                    sLine = sLine & myReader2("SerialNumber") & ","
+                End While
+                myReader2.Close()
+                While AssetDone < AssetCount '- 1
+                    sLine = sLine & ",,,,,,"
+                    AssetDone = AssetDone + 1
+                End While
+            End If
+            '    End If
+            OutputDetails(sLine, AssetCount)
+            sLine = ""
+        End While
+        myReader.Close()
+    End Sub
+    Sub OutputDetails(ByVal sLine, ByVal AssetCount)
+        Dim i As Integer
+        Dim j As Integer
+        Dim r As DataRow
+        aLine = Split(sLine, ",")
+        r = t.NewRow()
+        For i = 0 To OrgUnitLevels
+            r(i) = aLine(i)
+        Next
+
+        r((CInt(OrgUnitLevels) + 1)) = aLine(CInt(OrgUnitLevels) + 1)
+        r((CInt(OrgUnitLevels) + 2)) = aLine(CInt(OrgUnitLevels) + 2)
+        r((CInt(OrgUnitLevels) + 3)) = aLine(CInt(OrgUnitLevels) + 3)
+        r((CInt(OrgUnitLevels) + 4)) = aLine(CInt(OrgUnitLevels) + 4)
+        r((CInt(OrgUnitLevels) + 5)) = aLine(CInt(OrgUnitLevels) + 5)
+        r((CInt(OrgUnitLevels) + 6)) = aLine(CInt(OrgUnitLevels) + 6)
+        r((CInt(OrgUnitLevels) + 7)) = aLine(CInt(OrgUnitLevels) + 7)
+        r((CInt(OrgUnitLevels) + 8)) = aLine(CInt(OrgUnitLevels) + 8)
+        r((CInt(OrgUnitLevels) + 9)) = aLine(CInt(OrgUnitLevels) + 9)
+        r((CInt(OrgUnitLevels) + 10)) = aLine(CInt(OrgUnitLevels) + 10)
+        r((CInt(OrgUnitLevels) + 11)) = aLine(CInt(OrgUnitLevels) + 11)
+        r((CInt(OrgUnitLevels) + 12)) = aLine(CInt(OrgUnitLevels) + 12)
+        r((CInt(OrgUnitLevels) + 13)) = aLine(CInt(OrgUnitLevels) + 13)
+        r((CInt(OrgUnitLevels) + 14)) = aLine(CInt(OrgUnitLevels) + 14)
+        r((CInt(OrgUnitLevels) + 15)) = aLine(CInt(OrgUnitLevels) + 15)
+        r((CInt(OrgUnitLevels) + 16)) = aLine(CInt(OrgUnitLevels) + 16)
+        r((CInt(OrgUnitLevels) + 17)) = aLine(CInt(OrgUnitLevels) + 17)
+        r((CInt(OrgUnitLevels) + 18)) = aLine(CInt(OrgUnitLevels) + 18)
+        r((CInt(OrgUnitLevels) + 19)) = aLine(CInt(OrgUnitLevels) + 19)
+        r((CInt(OrgUnitLevels) + 20)) = aLine(CInt(OrgUnitLevels) + 20)
+        r((CInt(OrgUnitLevels) + 21)) = aLine(CInt(OrgUnitLevels) + 21)
+        r((CInt(OrgUnitLevels) + 22)) = aLine(CInt(OrgUnitLevels) + 22)
+        r((CInt(OrgUnitLevels) + 23)) = aLine(CInt(OrgUnitLevels) + 23)
+        r((CInt(OrgUnitLevels) + 24)) = aLine(CInt(OrgUnitLevels) + 24)
+        r((CInt(OrgUnitLevels) + 25)) = aLine(CInt(OrgUnitLevels) + 25)
+        r((CInt(OrgUnitLevels) + 26)) = aLine(CInt(OrgUnitLevels) + 26)
+        r((CInt(OrgUnitLevels) + 27)) = aLine(CInt(OrgUnitLevels) + 27)
+
+        For j = 0 To CInt(AssetCount - 1)
+            r((CInt(OrgUnitLevels) + 28) + (j * 6)) = aLine((CInt(OrgUnitLevels) + 28) + (j * 6))
+            r((CInt(OrgUnitLevels) + 29) + (j * 6)) = aLine((CInt(OrgUnitLevels) + 29) + (j * 6))
+            r((CInt(OrgUnitLevels) + 30) + (j * 6)) = aLine((CInt(OrgUnitLevels) + 30) + (j * 6))
+            r((CInt(OrgUnitLevels) + 31) + (j * 6)) = aLine((CInt(OrgUnitLevels) + 31) + (j * 6))
+            r((CInt(OrgUnitLevels) + 32) + (j * 6)) = aLine((CInt(OrgUnitLevels) + 32) + (j * 6))
+            r((CInt(OrgUnitLevels) + 33) + (j * 6)) = aLine((CInt(OrgUnitLevels) + 33) + (j * 6))
+        Next
+
+        t.Rows.Add(r)
+    End Sub
+    Sub DownloadFile(ByVal sClientID, ByVal FileType)
+        Response.Clear()
+        Response.ClearHeaders()
+        Response.ContentType = "text/csv"
+        Response.AddHeader("content-disposition", "attachment;filename=" & sFileName)
+
+        If FileType = 1 Then
+            Dim r As DataRow
+            Dim i As Integer
+            Dim j As Integer
+            OrgUnitLevels = GetOrgUnitLevels(sClientID)
+            AssetCount = GetAssetNumbers(sClientID)
+            InsertCSVHeadders(OrgUnitLevels, AssetCount)
+
+            For Each r In ds.Tables("Assets").Rows
+                For i = 0 To OrgUnitLevels - 1
+                    Response.Write(r(i) & ",")
+                Next
+
+                Response.Write(r((CInt(OrgUnitLevels) + 0)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 1)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 2)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 3)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 4)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 5)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 6)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 7)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 8)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 9)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 10)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 11)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 12)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 13)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 14)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 15)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 16)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 17)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 18)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 19)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 20)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 21)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 22)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 23)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 24)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 25)) & ",")
+                Response.Write(r((CInt(OrgUnitLevels) + 26)) & ",")
+
+                For j = 0 To CInt(AssetCount - 1)
+                    Response.Write(r((CInt(OrgUnitLevels) + 27) + (j * 6)) & ",")
+                    Response.Write(r((CInt(OrgUnitLevels) + 28) + (j * 6)) & ",")
+                    Response.Write(r((CInt(OrgUnitLevels) + 29) + (j * 6)) & ",")
+                    Response.Write(r((CInt(OrgUnitLevels) + 30) + (j * 6)) & ",")
+                    Response.Write(r((CInt(OrgUnitLevels) + 31) + (j * 6)) & ",")
+                    Response.Write(r((CInt(OrgUnitLevels) + 32) + (j * 6)) & ",")
+                Next
+                Response.Write(vbCrLf)
+            Next
+
+        ElseIf FileType = 2 Then
+            Response.Write(ds.GetXml())
+        End If
+        Response.End()
+
+    End Sub
+    Private Sub DownloadXML_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles DownloadXML.Click
+        If ddlClientSelect.SelectedValue.ToString() = "-1" Then
+            RequiredFieldValidator1.IsValid = False
+        Else
+            Call ExportClientAssets(ddlClientSelect.SelectedValue.ToString(), ddlFileType.SelectedValue.ToString())
+            DownloadFile(ddlClientSelect.SelectedValue.ToString(), ddlFileType.SelectedValue.ToString())
+        End If
+    End Sub
+End Class

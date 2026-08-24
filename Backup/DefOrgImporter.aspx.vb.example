@@ -1,0 +1,208 @@
+Imports System
+Imports System.IO
+Imports System.Data
+Imports System.Data.SqlClient
+Imports System.Data.OleDb
+Public Class DefOrgImporter
+  Inherits System.Web.UI.Page
+
+#Region " Web Form Designer Generated Code "
+
+  'This call is required by the Web Form Designer.
+  <System.Diagnostics.DebuggerStepThrough()> Private Sub InitializeComponent()
+
+  End Sub
+  Protected WithEvents btnImport As System.Web.UI.WebControls.Button
+  Protected WithEvents lblOutput As System.Web.UI.WebControls.Label
+
+  'Database Connection Details
+  Dim mySqlDataReader As System.Data.SqlClient.SqlDataReader
+  Dim MyConnection As System.Data.SqlClient.SqlConnection
+  Dim MyConnection2 As System.Data.SqlClient.SqlConnection
+  Dim MyConnection3 As System.Data.SqlClient.SqlConnection
+  Dim mySelectQuery As String
+  Dim myReader As System.Data.SqlClient.SqlDataReader
+  Dim myReader2 As System.Data.SqlClient.SqlDataReader
+  Dim myReader3 As System.Data.SqlClient.SqlDataReader
+  Dim MyCommand As New System.Data.SqlClient.SqlCommand
+  Dim MyCommand2 As New System.Data.SqlClient.SqlCommand
+
+  'Other Variables
+  Dim FileLocation As String
+  Dim LogString As String
+  Dim LogFileName As String
+  Dim file As System.IO.StreamWriter
+  Dim lineCounter As Integer
+  Dim line As String
+  Dim OrgUnitParentID As String
+  Dim sClientID As String
+
+  'NOTE: The following placeholder declaration is required by the Web Form Designer.
+  'Do not delete or move it.
+  Private designerPlaceholderDeclaration As System.Object
+
+  Private Sub Page_Init(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Init
+    'CODEGEN: This method call is required by the Web Form Designer
+    'Do not modify it using the code editor.
+    InitializeComponent()
+  End Sub
+
+#End Region
+
+  Private Sub Page_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
+    'Put user code to initialize the page here
+    MyConnection = New System.Data.SqlClient.SqlConnection(Session("OperationalDB"))
+    MyConnection2 = New System.Data.SqlClient.SqlConnection(Session("OperationalDB"))
+    MyConnection3 = New System.Data.SqlClient.SqlConnection(Session("OperationalDB"))
+    MyCommand.CommandTimeout = 60
+
+
+  End Sub
+
+  Private Sub btnImport_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btnImport.Click
+    'import org units
+    lblOutput.Text = "Start Org Import (" & Now() & ")<br>"
+    Call GetCSVData()
+    lblOutput.Text = "End Org Import (" & Now() & ")<br>"
+  End Sub
+  Sub GetCSVData()
+    Dim FileLocation As String
+    FileLocation = Server.MapPath("DefSheets") & "\" & Request("FileName")
+    Dim sr As StreamReader = New StreamReader(FileLocation)
+    Dim counter As Integer
+    counter = 0
+    Do
+      line = sr.ReadLine()
+      line = Replace(Trim(line), "'", "''")
+      'line = Replace(Trim(line), """", "")
+
+      If lineCounter > 0 Then
+        If counter > 2 Then
+          line = Nothing
+        ElseIf Left(Trim(line), 2) = ",," Or Trim(line) = "" Then
+          'Call ErrorOutput(line)
+          lblOutput.Text = lblOutput.Text & "Line skipped : " & lineCounter & vbCrLf
+          counter = counter + 1
+        Else
+          counter = 0
+          Call ImportOrgs(line)
+        End If
+      Else
+        'file.WriteLine(line)
+      End If
+      lineCounter = lineCounter + 1
+    Loop Until line Is Nothing
+    sr.Close()
+    'Label1.Text = "-- END FILE --"
+  End Sub
+  Sub ImportOrgs(ByVal line)
+    Dim aLine() = ParseLine(line) 'Split(sLine, ",")
+    Dim i As Integer
+    For i = 0 To UBound(aLine)
+      aLine(i) = Replace(aLine(i), """", "")
+      '  Trace.Write(aLine(i))
+    Next
+
+    Call CheckClient(aLine(0))
+
+    OrgUnitParentID = 0
+
+    If Trim(aLine(1)) <> "" Then
+      Call CheckOrgUnit(aLine(1), OrgUnitParentID, 1)
+    End If
+    If Trim(aLine(2)) <> "" Then
+      Call CheckOrgUnit(aLine(2), OrgUnitParentID, 2)
+    End If
+    If Trim(aLine(3)) <> "" Then
+      Call CheckOrgUnit(aLine(3), OrgUnitParentID, 3)
+    End If
+    If Trim(aLine(4)) <> "" Then
+      Call CheckOrgUnit(aLine(4), OrgUnitParentID, 4)
+    End If
+    If Trim(aLine(5)) <> "" Then
+      Call CheckOrgUnit(aLine(5), OrgUnitParentID, 5)
+    End If
+
+  End Sub
+  Sub CheckOrgUnit(ByVal OrgUnitName, ByVal OrgUnitParent, ByVal orgLvl)
+    mySelectQuery = "SELECT * FROM ClientOrganisationUnit WHERE OrgUnitName = '" & OrgUnitName & "' AND OrgUnitParent = " & OrgUnitParent & " AND EndDate IS NULL AND ClientID = " & sClientID
+    Trace.Write(mySelectQuery)
+    MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+    If MyConnection.State.ToString = "Closed" Then
+      MyConnection.Open()
+    End If
+    myReader = MyCommand.ExecuteReader()
+    If myReader.Read() Then
+      'Org Unit in db. caution, check for org unit in different location.
+      lblOutput.Text = lblOutput.Text & "<b>Old:</b>" & OrgUnitName & "<br>" & vbCrLf
+      OrgUnitParentID = myReader("OrgUnitID")
+    Else
+      'New Org Unit
+      myReader.Close()
+      Dim Transaction = MyConnection.BeginTransaction()
+      MyCommand.Transaction = Transaction
+      Try
+
+        mySelectQuery = "INSERT INTO ClientOrganisationUnit (OrgUnitName, OrgUnitParent, StartDate, OrgUnitLevel, ClientID ) VALUES ('" & OrgUnitName.ToString() & "', " & OrgUnitParent.ToString & ", '" & Now() & "', " & orgLvl.ToString() & ", " & sClientID & ") ; SELECT SCOPE_IDENTITY() AS ID"
+        Trace.Write(mySelectQuery)
+        'MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+        MyCommand.CommandText = mySelectQuery
+        myReader.Close()
+
+        myReader3 = MyCommand.ExecuteReader()
+        myReader3.Read()
+
+        OrgUnitParentID = myReader3.Item(0).ToString()
+        myReader3.Close()
+        mySelectQuery = "UPDATE ClientOrganisationUnit SET OrgUnitID = " + OrgUnitParentID.ToString() + " WHERE UID = "REDACTED"Closed" Then
+          MyConnection.Open()
+        End If
+        'MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+        MyCommand.CommandText = mySelectQuery
+        MyCommand.ExecuteNonQuery()
+
+        Transaction.Commit()
+        lblOutput.Text = lblOutput.Text & "<b>New:</b> " & OrgUnitName & "<br>" & vbCrLf
+      Catch
+        Response.Write("Error Updating details:" & mySelectQuery)
+        Transaction.Rollback()
+        Response.End()
+      Finally
+        MyConnection.Close()
+      End Try
+
+    End If
+    myReader.Close()
+
+  End Sub
+  Function CheckClient(ByVal ClientName)
+    Dim sReturn As Boolean
+    mySelectQuery = "SELECT ClientID FROM Client WHERE  (ClientName = '" & ClientName & "') AND (EndDate IS NULL)"
+    MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection2)
+
+    If MyConnection2.State.ToString = "Closed" Then
+      MyConnection2.Open()
+    End If
+    myReader2 = MyCommand.ExecuteReader()
+    myReader2.Read()
+    If myReader2.HasRows() Then
+      sClientID = myReader2("ClientID").ToString()
+      sReturn = True
+    Else
+      'error line
+      sReturn = False
+    End If
+    myReader2.Close()
+    Return sReturn
+  End Function
+  Private Shared Function ParseLine(ByVal oneLine As String) As String()
+    ' Returns an array containing the values of the comma-separated fields.
+
+    ' This pattern actually recognizes the correct commas.
+    ' The Regex.Split() command later gets text between the commas.
+    Dim pattern As String = ",(?=(?:[^""]*""[^""]*"")*(?![^""]*""))"
+    Dim r As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex(pattern)
+    Return r.Split(oneLine)
+  End Function
+
+End Class

@@ -1,0 +1,1168 @@
+Imports System
+Imports System.IO
+Imports System.Data
+Imports System.Data.OleDb
+Imports MoveBilling
+Public Class UploadAssets
+  Inherits System.Web.UI.Page
+
+#Region " Web Form Designer Generated Code "
+
+  'This call is required by the Web Form Designer.
+  <System.Diagnostics.DebuggerStepThrough()> Private Sub InitializeComponent()
+
+  End Sub
+  Protected WithEvents lblClientname As System.Web.UI.WebControls.Label
+  Protected WithEvents lblFileName As System.Web.UI.WebControls.Label
+  Protected WithEvents lblRevisionNumber As System.Web.UI.WebControls.Label
+  Protected WithEvents lblDateUploaded As System.Web.UI.WebControls.Label
+  Protected WithEvents lblImportedBy As System.Web.UI.WebControls.Label
+  Protected WithEvents lblOrgUnitlevels As System.Web.UI.WebControls.Label
+  Protected WithEvents lblImportType As System.Web.UI.WebControls.Label
+  Protected WithEvents lblMoveType As System.Web.UI.WebControls.Label
+  Protected WithEvents lblMoveDate As System.Web.UI.WebControls.Label
+  Protected WithEvents tbxLogWindow As System.Web.UI.WebControls.TextBox
+  Protected WithEvents btnDone As System.Web.UI.WebControls.ImageButton
+  Protected WithEvents hlLogFile As System.Web.UI.WebControls.HyperLink
+
+  'Database Connection Details
+  Dim mySqlDataReader As System.Data.SqlClient.SqlDataReader
+  Dim MyConnection As System.Data.SqlClient.SqlConnection
+  Dim MyConnection2 As System.Data.SqlClient.SqlConnection
+  Dim MyConnection3 As System.Data.SqlClient.SqlConnection
+  Dim mySelectQuery As String
+  Dim myReader As System.Data.SqlClient.SqlDataReader
+  Dim myReader2 As System.Data.SqlClient.SqlDataReader
+  Dim myReader3 As System.Data.SqlClient.SqlDataReader
+  Dim MyCommand As New System.Data.SqlClient.SqlCommand
+  Dim MyCommand2 As New System.Data.SqlClient.SqlCommand
+
+  'Other Veriables
+  Dim file As System.IO.StreamWriter
+  Dim FileLocation As String
+  Dim LogString As String
+  Dim sUploadFileName As String
+  Dim suploadDate As String
+  Dim sUploadUser As String
+  Dim sUploadChecked As String
+  Dim sUploadVerified As String
+  Dim sUploadSuccessful As String
+  Dim sUploadRemoved As String
+  Dim sUploadFormat As String
+  Dim sClientID As String
+  Dim sRevisionNumber As String
+  Dim sImportedBy As String
+  Dim sOrgLevels As String
+  Dim sImportType As String
+  Dim sMoveType As String
+  Dim sMoveDate As String
+  Dim OrgUnitParentID As Integer
+  Dim lineCounter As Integer
+  Dim CriticalError As Boolean
+  Dim sServiceID As String
+  Dim sUserID As String
+  Dim noAssets As Integer
+  Dim sOldOrgID As String
+  Dim sOldUserID As String
+  Dim ImportStateID As String
+  Dim OrgUnitLevel As Integer
+  Dim br As New BillingRelocation
+  Dim bAllBilling As Boolean
+
+  'Column Variables
+  Dim ServiceNumberCOL As Integer
+  Dim FirstNameCOL As Integer
+  Dim LastNameCOL As Integer
+  Dim CarrierNameCOL As Integer
+  Dim AccountNumberCOL As Integer
+  Dim RatePlanCOL As Integer
+  Dim ContractEndDateCOL As Integer
+  Dim PhoneUserEmailCOL As Integer
+  Dim CostCodeCOL As Integer
+  Dim Custom1COL As Integer
+  Dim Custom2COL As Integer
+  Dim Custom3COL As Integer
+  Dim Custom4COL As Integer
+  Dim EmployeeBudgetCOL As Integer
+  Dim NetworkTypeCOL As Integer
+  Dim Feature1COL As Integer
+  Dim Feature2COL As Integer
+  Dim Feature3COL As Integer
+  Dim Feature4COL As Integer
+  Dim Feature5COL As Integer
+  Dim Feature6COL As Integer
+  Dim Feature7COL As Integer
+  Dim Feature8COL As Integer
+  Dim Feature9COL As Integer
+  Dim Feature0COL As Integer
+
+  Dim AssetTypeCOL As Integer
+  Dim AssetManafacturerCOL As Integer
+  Dim AssetNameCOL As Integer
+  Dim IMEESNNumberCOL As Integer
+  Dim AssetNumberCOL As Integer
+  Dim SerialNumberCOL As Integer
+  Dim ManafacturerCOL As Integer
+  Dim AccessoryNameCOL As Integer
+
+  'NOTE: The following placeholder declaration is required by the Web Form Designer.
+  'Do not delete or move it.
+  Private designerPlaceholderDeclaration As System.Object
+
+  Private Sub Page_Init(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Init
+    'CODEGEN: This method call is required by the Web Form Designer
+    'Do not modify it using the code editor.
+    InitializeComponent()
+  End Sub
+
+#End Region
+
+  Private Sub Page_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
+
+    If Not IsPostBack Then
+      Call OpenLogFile()
+      'Put user code to initialize the page here
+      MyConnection = New System.Data.SqlClient.SqlConnection(Session("OperationalDB"))
+      MyConnection2 = New System.Data.SqlClient.SqlConnection(Session("OperationalDB"))
+      MyConnection3 = New System.Data.SqlClient.SqlConnection(Session("OperationalDB"))
+      MyCommand.CommandTimeout = 60
+
+      Call GetFileDetails()
+      bAllBilling = False
+      If sMoveType <> 3 Then
+        If sMoveType = 1 Then
+          bAllBilling = True
+        End If
+      End If
+      If Right(Request("FileName"), 3) = "csv" Then
+        Call GetCSVData()
+      ElseIf Right(Request("FileName"), 3) = "xls" Then
+        Call GetExcelData()
+      Else
+        Call ErrorMessage("Invalid File Type", 0, 3)
+      End If
+      file.WriteLine("End File")
+      file.Close()
+      LogString = LogString & "Complete" & vbCrLf
+    End If
+  End Sub
+  Sub OpenLogFile()
+    Dim LogFileName As String
+    LogFileName = Left(Request("FileName"), (Len(Request("FileName")) - 4)) & "-" & Session("UsersName") & "-"
+
+    If Day(Now) < 10 Then
+      LogFileName = LogFileName & "0" & Day(Now)
+    Else
+      LogFileName = LogFileName & Day(Now)
+    End If
+    If Month(Now) < 10 Then
+      LogFileName = LogFileName & "0" & Month(Now)
+    Else
+      LogFileName = LogFileName & Month(Now)
+    End If
+    LogFileName = LogFileName & Year(Now) & "-"
+    If Hour(Now) < 10 Then
+      LogFileName = LogFileName & "0" & Hour(Now)
+    Else
+      LogFileName = LogFileName & Hour(Now)
+    End If
+    If Minute(Now) < 10 Then
+      LogFileName = LogFileName & "0" & Minute(Now)
+    Else
+      LogFileName = LogFileName & Minute(Now)
+    End If
+    If Second(Now) < 10 Then
+      LogFileName = LogFileName & "0" & Second(Now)
+    Else
+      LogFileName = LogFileName & Second(Now)
+    End If
+
+    LogFileName = LogFileName & ".txt"
+
+    FileLocation = Server.MapPath("LogFiles") & "\" & LogFileName
+    file = New System.IO.StreamWriter(FileLocation)
+    hlLogFile.NavigateUrl = "LogFiles\" & LogFileName
+
+  End Sub
+  Sub GetFileDetails()
+    lineCounter = 1
+    mySelectQuery = "SELECT * FROM ImportAssetRegister WHERE UID = "REDACTED"UID")
+    MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+
+    If MyConnection.State.ToString = "Closed" Then
+      MyConnection.Open()
+    End If
+    myReader = MyCommand.ExecuteReader()
+    myReader.Read()
+
+    sUploadFileName = myReader("UploadFileName").ToString()
+    suploadDate = myReader("uploadDate").ToString()
+    sUploadUser = myReader("UploadUser").ToString()
+    sUploadChecked = myReader("UploadChecked").ToString()
+    sUploadVerified = myReader("UploadVerified").ToString()
+    sUploadSuccessful = myReader("UploadSuccessful").ToString()
+    sUploadRemoved = myReader("UploadRemoved").ToString()
+    sUploadFormat = myReader("UploadFormat").ToString()
+    sClientID = myReader("ClientID").ToString()
+    sRevisionNumber = myReader("RevisionNumber").ToString()
+    sImportedBy = myReader("ImportedBy").ToString()
+    sImportType = myReader("ImportType").ToString()
+    sMoveType = myReader("MoveType").ToString()
+    sMoveDate = myReader("MoveDate").ToString()
+    ImportStateID = myReader("ImportState").ToString()
+
+    'set lables
+    lblClientname.Text = getClientName(sClientID)
+    lblFileName.Text = sUploadFileName
+    lblRevisionNumber.Text = sRevisionNumber
+    lblDateUploaded.Text = suploadDate
+    lblImportedBy.Text = sImportedBy
+    lblOrgUnitlevels.Text = sOrgLevels
+    lblImportType.Text = GetImportType(sImportType)
+    lblMoveType.Text = GetMoveType(sMoveType)
+    lblMoveDate.Text = sMoveDate
+    myReader.Close()
+
+    LogString = LogString & "Client Name: " & lblClientname.Text & vbCrLf
+    LogString = LogString & "File Name: " & lblFileName.Text & vbCrLf
+    LogString = LogString & "Revision Number: " & lblRevisionNumber.Text & vbCrLf
+    LogString = LogString & "Date Uploaded: " & lblDateUploaded.Text & vbCrLf
+    LogString = LogString & "Imported By: " & lblImportedBy.Text & vbCrLf
+    LogString = LogString & "Import Type: " & lblImportType.Text & vbCrLf
+    LogString = LogString & "Move Type: " & lblMoveType.Text & vbCrLf
+    If lblMoveType.Text = "Move From" Then
+      LogString = LogString & "Move Date: " & lblMoveDate.Text & vbCrLf
+    End If
+
+    LogString = LogString & vbCrLf & "--------------------" & vbCrLf & vbCrLf
+
+    WriteLogToFile(LogString)
+
+    'Remove All org units listed in the Temp Table for the selected client
+    mySelectQuery = "DELETE FROM ImportTempOrgUnits WHERE (ClientID = " & sClientID & ")"
+    MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+    If MyConnection.State.ToString = "Closed" Then
+      MyConnection.Open()
+    End If
+    MyCommand.ExecuteNonQuery()
+    MyConnection.Close()
+    mySelectQuery = "DELETE FROM ImportTempService WHERE (ClientID = " & sClientID & ")"
+    MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+    If MyConnection.State.ToString = "Closed" Then
+      MyConnection.Open()
+    End If
+    MyCommand.ExecuteNonQuery()
+    MyConnection.Close()
+
+    'Insert all the current org units and their respective Parents into the Temp Table
+    mySelectQuery = "SELECT OrgUnitID, OrgUnitParent, OrgUnitName FROM ClientOrganisationUnit WHERE (ClientID  = " & sClientID & ") AND (EndDate IS NULL)"
+    MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+    If MyConnection.State.ToString = "Closed" Then
+      MyConnection.Open()
+    End If
+    myReader = MyCommand.ExecuteReader()
+    Do While myReader.Read()
+      'Insert org unit into Temp Table
+      mySelectQuery = "INSERT INTO ImportTempOrgUnits (orgID, name, parent, clientID) VALUES ('" & myReader("OrgUnitID") & "', '" & Replace(LCase(Trim(myReader("OrgUnitName"))), "'", "''") & "', " & Replace(myReader("OrgUnitParent"), "'", "''") & ", " & sClientID & ")"
+      'Trace.Write(mySelectQuery)
+      MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection3)
+      If MyConnection3.State.ToString = "Closed" Then
+        MyConnection3.Open()
+      End If
+      MyCommand.ExecuteNonQuery()
+      MyConnection3.Close()
+    Loop
+    myReader.Close()
+
+  End Sub
+  Function getClientName(ByVal ClientID)
+    mySelectQuery = "SELECT ClientName FROM Client WHERE ClientID = " & ClientID
+    MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection2)
+    If MyConnection2.State.ToString = "Closed" Then
+      MyConnection2.Open()
+    End If
+    myReader2 = MyCommand.ExecuteReader()
+    myReader2.Read()
+    Return myReader2("ClientName")
+    myReader2.Close()
+  End Function
+  Public Function GetImportType(ByVal typeID)
+    If typeID = "1" Then
+      Return "Add Assets"
+    ElseIf typeID = "2" Then
+      Return "Skip Assets"
+    ElseIf typeID = "3" Then
+      Return "Update Assets"
+    ElseIf typeID = "4" Then
+      Return "Org Structure"
+    Else
+      Return "Error"
+    End If
+  End Function
+  Public Function GetMoveType(ByVal typeID)
+    If typeID = "1" Then
+      Return "Move All"
+    ElseIf typeID = "2" Then
+      Return "Move From"
+    ElseIf typeID = "3" Then
+      Return "Don't Move"
+    Else
+      Return "Error"
+    End If
+  End Function
+  Sub GetCSVData()
+    Dim FileLocation As String
+    FileLocation = Server.MapPath("AssetSheets") & "\" & Request("FileName")
+    Dim sr As StreamReader = New StreamReader(FileLocation)
+    Dim line As String
+    Dim counter As Integer
+    counter = 0
+    Do
+      line = sr.ReadLine()
+      line = Replace(Trim(line), "'", "''")
+      line = Replace(Trim(line), """", "")
+
+      If lineCounter > 2 Then
+        If counter > 2 Then
+          line = Nothing
+        ElseIf Left(Trim(line), 2) = ",," Or Trim(line) = "" Then
+          Call ErrorMessage("Line Skipped", lineCounter, 2)
+          LogString = LogString & "Line skipped : " & lineCounter & vbCrLf
+          counter = counter + 1
+        Else
+          counter = 0
+          Dim aLine() = Split(line, ",")
+          Call ProcessData(aLine)
+        End If
+      Else
+        If lineCounter = 2 Then
+          'Read in and return org levels
+          Call ProcessTitle(line)
+        End If
+      End If
+      lineCounter = lineCounter + 1
+    Loop Until line Is Nothing
+    sr.Close()
+    LogString = LogString & ">>END FILE<<"
+  End Sub
+  Sub GetExcelData()
+
+    Dim conn As New OleDbConnection
+    Dim fileReader As OleDbDataReader
+    Dim connString As String
+    Dim cmd As New OleDbCommand
+    Dim FilePath As String
+    Dim lineArray As Array
+    Dim FileLocation As String
+    FileLocation = Server.MapPath("AssetSheets") & "\" & Request("FileName")
+
+    ' Set the connection string.
+    connString = "Data Source='" & FileLocation & "';Provider=Microsoft.Jet.OLEDB.4.0;Extended Properties=""Excel 8.0;IMEX=1;HDR=NO;"""
+
+    ' Open the connection.
+    conn.ConnectionString = connString
+    conn.Open()
+
+    'get the sheet names
+    Dim dt As DataTable
+    dt = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, Nothing)
+    Dim excelSheets() As String = New String(dt.Rows.Count) {}
+    Dim i As Integer = 0
+    'get the sheet names
+    Dim row As DataRow
+    For Each row In dt.Rows
+      excelSheets(i) = row("TABLE_NAME").ToString()
+      i = i + 1
+    Next
+    i = 0
+
+    'Set the command properties.
+    cmd.Connection = conn
+    cmd.CommandText = "SELECT * FROM [" & excelSheets(0) & "]"
+
+    ' Get the OleDbDataReader
+    ' and do some processing with it.
+    fileReader = cmd.ExecuteReader(CommandBehavior.CloseConnection)
+    lineCounter = 1
+    Dim counter As Integer = 0
+    While (fileReader.Read())
+      'Load in file details
+      If counter < 2 Then
+        If lineCounter <> 1 Then
+          Dim line As String
+          i = 0
+          line = ""
+          While i < fileReader.FieldCount - 1
+            line = line & Trim(fileReader(i).ToString()) & ","
+            i = i + 1
+          End While
+
+          line = Replace(Trim(line), "'", "''")
+          line = Replace(Trim(line), """", "")
+
+          If Left(line, 10) = ",,,,,,,,,," Then
+            Call ErrorMessage("Line Skipped", lineCounter, 2)
+            counter = counter + 1
+          Else
+            counter = 0
+            'Trace.Write(lineCounter & " : " & line)
+            If lineCounter = 2 Then
+              ProcessTitle(line)
+            Else
+              Dim aLine() = Split(line, ",")
+              Call ProcessData(aLine)
+            End If
+
+          End If
+        End If
+        lineCounter = lineCounter + 1
+      End If
+
+    End While
+    fileReader.Close()
+    LogString = LogString & ">>END FILE<<"
+
+  End Sub
+  Sub ProcessTitle(ByVal line)
+    Dim aLine() = Split(line, ",")
+    Call SetOrgUnitLevels(aLine)
+  End Sub
+  Sub SetOrgUnitLevels(ByVal aline As Array)
+    Dim i As Object
+    Dim zz As Boolean
+    Dim orgLevels As Integer
+    zz = True
+    orgLevels = 0
+    For Each i In aline
+      If zz Then
+        If sImportType.ToString() = "4" Then
+          If aline(orgLevels).ToString() <> "Destination Org Unit" Then
+            orgLevels = orgLevels + 1
+          Else
+            sOrgLevels = orgLevels ' - 1
+            zz = False
+          End If
+        Else
+          If aline(orgLevels).ToString() <> "Service Number" Then
+            orgLevels = orgLevels + 1
+          Else
+            sOrgLevels = orgLevels - 1
+            zz = False
+          End If
+        End If
+      End If
+    Next i
+    lblOrgUnitlevels.Text = sOrgLevels
+    Call SetColCount()
+    Call CheckAssetCount(UBound(aline))
+
+  End Sub
+  Sub CheckAssetCount(ByVal arrayLength)
+    noAssets = Math.Ceiling((arrayLength - Feature0COL) / 6)
+    If noAssets < 0 Then
+      noAssets = 0
+    End If
+  End Sub
+  Sub SetColCount()
+    ServiceNumberCOL = sOrgLevels + 1
+    FirstNameCOL = sOrgLevels + 2
+    LastNameCOL = sOrgLevels + 3
+    CarrierNameCOL = sOrgLevels + 4
+    'ServiceTypeCOL = serviceTypeCOL + 5
+    AccountNumberCOL = sOrgLevels + 6
+    RatePlanCOL = sOrgLevels + 7
+    ContractEndDateCOL = sOrgLevels + 8
+    PhoneUserEmailCOL = sOrgLevels + 9
+    CostCodeCOL = sOrgLevels + 10
+    Custom1COL = sOrgLevels + 11
+    Custom2COL = sOrgLevels + 12
+    Custom3COL = sOrgLevels + 13
+    Custom4COL = sOrgLevels + 14
+    EmployeeBudgetCOL = sOrgLevels + 15
+    NetworkTypeCOL = sOrgLevels + 16
+    Feature1COL = sOrgLevels + 17
+    Feature2COL = sOrgLevels + 18
+    Feature3COL = sOrgLevels + 19
+    Feature4COL = sOrgLevels + 20
+    Feature5COL = sOrgLevels + 21
+    Feature6COL = sOrgLevels + 22
+    Feature7COL = sOrgLevels + 23
+    Feature8COL = sOrgLevels + 24
+    Feature9COL = sOrgLevels + 25
+    Feature0COL = sOrgLevels + 26
+
+    AssetTypeCOL = sOrgLevels + 27
+    AssetManafacturerCOL = sOrgLevels + 28
+    AssetNameCOL = sOrgLevels + 29
+    IMEESNNumberCOL = sOrgLevels + 30
+    AssetNumberCOL = sOrgLevels + 31
+    SerialNumberCOL = sOrgLevels + 32
+
+  End Sub
+  Sub ProcessData(ByVal DetailsArray As Array)
+    'Insert Data into Database
+    Dim i As Integer
+    For i = 0 To UBound(DetailsArray)
+      DetailsArray(i) = Replace(DetailsArray(i), """", "")
+    Next
+
+    LogString = LogString & "Line Number " & lineCounter & vbCrLf
+    Dim j As Integer
+    Dim DetailsLength As String
+    If sImportType <> "2" Or sImportType <> 4 Then
+      Call CheckAssetCount(UBound(DetailsArray))
+    End If
+    DetailsArray = CheckArraySize(DetailsArray)
+    OrgUnitParentID = 0
+    OrgUnitLevel = 0
+
+    For j = 0 To sOrgLevels - 1
+      Call ProcessOrgUnit(DetailsArray(j), OrgUnitParentID)
+    Next
+
+    If sImportType.ToString() <> "4" Then
+      Call ProcessUser(Trim(DetailsArray(FirstNameCOL)), Trim(DetailsArray(LastNameCOL)), Trim(DetailsArray(PhoneUserEmailCOL)), Trim(DetailsArray(CostCodeCOL)), Trim(DetailsArray(Custom1COL)), Trim(DetailsArray(Custom2COL)), Trim(DetailsArray(Custom3COL)), Trim(DetailsArray(Custom4COL)), Trim(DetailsArray(EmployeeBudgetCOL)))
+      Call ProcessService(Trim(DetailsArray(ServiceNumberCOL)), Trim(DetailsArray(CarrierNameCOL)), Trim(DetailsArray(AccountNumberCOL)), Trim(DetailsArray(RatePlanCOL)), Trim(DetailsArray(ContractEndDateCOL)), Trim(DetailsArray(NetworkTypeCOL)), Trim(DetailsArray(Feature1COL)), Trim(DetailsArray(Feature2COL)), Trim(DetailsArray(Feature3COL)), Trim(DetailsArray(Feature4COL)), Trim(DetailsArray(Feature5COL)), Trim(DetailsArray(Feature6COL)), Trim(DetailsArray(Feature7COL)), Trim(DetailsArray(Feature8COL)), Trim(DetailsArray(Feature9COL)), Trim(DetailsArray(Feature0COL)))
+      If sImportType <> "2" Then
+        Call ProcessAssets(DetailsArray)
+      End If
+      'Call CheckRelocation()
+    End If
+    LogString = LogString & vbCrLf
+    WriteLogToFile(LogString)
+
+  End Sub
+  Sub ProcessExistingDetails(ByVal UserFirstName, ByVal UserLastName, ByVal OrgUnit, ByVal ServiceNumber)
+
+  End Sub
+  Function ProcessOrgUnit(ByVal OrgUnitName, ByVal ParentID)
+    'check where parentID = 0 and Name matches, if not then caution output
+    If OrgUnitName = "" Then
+      'Skip
+      LogString = LogString & "Org Unit Skipped" & vbCrLf
+    Else
+      mySelectQuery = "SELECT OrgUnitID, OrgUnitName, OrgUnitParent FROM ClientOrganisationUnit WHERE OrgUnitName = '" & OrgUnitName & "' AND OrgUnitParent = " & ParentID & " AND EndDate IS NULL AND  ClientID = " & sClientID
+      MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+      If MyConnection.State.ToString = "Closed" Then
+        MyConnection.Open()
+      End If
+      myReader = MyCommand.ExecuteReader()
+      If myReader.Read() Then
+        'ok
+        LogString = LogString & "Org Unit Loaded: " & OrgUnitName & "(" & myReader("OrgUnitID") & ")" & vbCrLf
+        OrgUnitParentID = myReader("OrgUnitID")
+      Else
+        'caution, check for org unit in different location.
+        myReader.Close()
+
+        mySelectQuery = "SELECT OrgUnitID, OrgUnitName, OrgUnitParent FROM ClientOrganisationUnit WHERE OrgUnitName = '" & OrgUnitName & "' AND EndDate IS NULL AND ClientID = " & sClientID
+        MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection2)
+        If MyConnection2.State.ToString = "Closed" Then
+          MyConnection2.Open()
+        End If
+        myReader2.Close()
+        myReader2 = MyCommand.ExecuteReader()
+        If myReader2.Read() Then
+          ErrorMessage("Org Unit <b>'" & OrgUnitName & "'</b> structure invalid", lineCounter, 3)
+        Else
+          OrgUnitLevel = OrgUnitLevel + 1
+          Call InsertNewOrgUnit(OrgUnitName, ParentID, OrgUnitLevel)
+        End If
+        myReader2.Close()
+
+      End If
+      myReader.Close()
+    End If
+  End Function
+  Sub ProcessService(ByVal ServiceNumber, ByVal Carrier, ByVal AccountNumber, ByVal RatePlan, ByVal ContractEndDate, ByVal NetworkType, ByVal Feature1, ByVal Feature2, ByVal Feature3, ByVal Feature4, ByVal Feature5, ByVal Feature6, ByVal Feature7, ByVal Feature8, ByVal Feature9, ByVal Feature0)
+    'dont forget the Service Type, 2 = Mobile Phone
+    Dim tempmobile As String
+    Dim intCounter As Integer
+    tempmobile = ""
+    ' Strip away everything except numerals
+    For intCounter = 1 To Len(ServiceNumber)
+      If IsNumeric(Mid(ServiceNumber, intCounter, 1)) Then
+        tempmobile = tempmobile & Mid(ServiceNumber, intCounter, 1)
+      End If
+    Next
+
+    ServiceNumber = tempmobile
+
+    sServiceID = ""
+    Dim ProviderID As Integer
+    Dim WhereString As String
+    Dim RatePlanID As String
+    Dim ServiceType As Integer
+    If ServiceNumber = "" Then
+      Call ErrorMessage("Blank Service", lineCounter, 2)
+    Else
+      'Load the carrier id into a variable
+      WhereString = ""
+      mySelectQuery = "SELECT DISTINCT UID, ProviderName, ServiceType  FROM ServiceProvider WHERE (ProviderName = '" & Carrier & "')"
+      MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+      If MyConnection.State.ToString = "Closed" Then
+        MyConnection.Open()
+      End If
+      myReader = MyCommand.ExecuteReader()
+      If myReader.Read() Then
+        LogString = LogString & "Carrier Loaded: " & Carrier & vbCrLf
+        ProviderID = myReader("UID")
+        ServiceType = myReader("ServiceType")
+        WhereString = WhereString & " , ServiceProviderID = " & myReader("UID") & ", ServiceType = " & myReader("ServiceType") & ""
+      Else
+        ErrorMessage("Carrier <b>'" & Carrier & "'</b> invalid", lineCounter, 3)
+        WhereString = WhereString & ""
+      End If
+      myReader.Close()
+
+      If AccountNumber = "" Then
+        WhereString = WhereString & ""
+      Else
+        WhereString = WhereString & " , ProviderAccountNumber = '" & AccountNumber & "'"
+      End If
+
+      If RatePlan = "" Then
+        'if no rate plan then skip
+        WhereString = WhereString & ""
+      Else
+        'check for existing, if not add new one
+        mySelectQuery = "SELECT * FROM ServiceProviderPlans WHERE PlanName = '" & RatePlan & "' AND ((ServiceProviderID = '" & ProviderID & "') OR (ServiceProviderID IS NULL))"
+        MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+        If MyConnection.State.ToString = "Closed" Then
+          MyConnection.Open()
+        End If
+        myReader = MyCommand.ExecuteReader()
+        If myReader.Read() Then
+          'return Rate Plan ID
+          RatePlanID = myReader("UID")
+        Else
+          'insert new value
+          mySelectQuery = "INSERT INTO ServiceProviderPlans (PlanName, ServiceProviderID) VALUES ('" & RatePlan & "','" & ProviderID & "') ;select @@identity"
+          MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+          myReader.Close()
+          myReader3 = MyCommand.ExecuteReader()
+          myReader3.Read()
+          RatePlanID = myReader3.Item(0).ToString()
+          myReader3.Close()
+
+        End If
+        myReader.Close()
+        WhereString = WhereString & " , PlanID = " & RatePlanID & ""
+      End If
+
+      If ContractEndDate = "" Then
+        'nothing
+        WhereString = WhereString & ""
+      Else
+        WhereString = WhereString & " , ContractEndDate = '" & CDate(ContractEndDate) & "'"
+      End If
+
+
+      'Service Options
+      Dim NetworkTypeID As String
+      mySelectQuery = "SELECT UID FROM NetworkType WHERE (NetworkType = '" & NetworkType & "')"
+      MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+      If MyConnection.State.ToString = "Closed" Then
+        MyConnection.Open()
+      End If
+      myReader = MyCommand.ExecuteReader()
+      If myReader.Read() Then
+        'return UID for network type
+        'nothing
+        WhereString = WhereString & " , NetworkTypeID = " & myReader("UID").ToString() & ""
+      Else
+        'insert new uid
+        mySelectQuery = "INSERT INTO NetworkType (NetworkType) VALUES ('" & NetworkType & "') ;select @@identity"
+        MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+        myReader.Close()
+        myReader3 = MyCommand.ExecuteReader()
+        myReader3.Read()
+        WhereString = WhereString & " , NetworkTypeID = " & myReader3.Item(0).ToString() & ""
+        myReader3.Close()
+      End If
+      myReader.Close()
+
+      'Update Feature 1 
+      If LCase(Feature1) = "y" Then
+        WhereString = WhereString & " , Feature1 = 1"
+      ElseIf LCase(Feature1) = "n" Then
+        WhereString = WhereString & " , Feature1 = 0"
+      Else
+        WhereString = WhereString & ""
+      End If
+
+      'Update Feature 2 
+      If LCase(Feature2) = "y" Then
+        WhereString = WhereString & " , Feature2 = 1"
+      ElseIf LCase(Feature2) = "n" Then
+        WhereString = WhereString & " , Feature2 = 0"
+      Else
+        WhereString = WhereString & ""
+      End If
+
+      'Update Feature 3 
+      If LCase(Feature3) = "y" Then
+        WhereString = WhereString & " , Feature3 = 1"
+      ElseIf LCase(Feature3) = "n" Then
+        WhereString = WhereString & " , Feature3 = 0"
+      Else
+        WhereString = WhereString & ""
+      End If
+
+      'Update Feature 4 
+      If LCase(Feature4) = "y" Then
+        WhereString = WhereString & " , Feature4 = 1"
+      ElseIf LCase(Feature4) = "n" Then
+        WhereString = WhereString & " , Feature4 = 0"
+      Else
+        WhereString = WhereString & ""
+      End If
+
+      'Update Feature 5 
+      If LCase(Feature5) = "y" Then
+        WhereString = WhereString & " , Feature5 = 1"
+      ElseIf LCase(Feature5) = "n" Then
+        WhereString = WhereString & " , Feature5 = 0"
+      Else
+        WhereString = WhereString & ""
+      End If
+
+      'Update Feature 6 
+      If LCase(Feature6) = "y" Then
+        WhereString = WhereString & " , Feature6 = 1"
+      ElseIf LCase(Feature6) = "n" Then
+        WhereString = WhereString & " , Feature6 = 0"
+      Else
+        WhereString = WhereString & ""
+      End If
+
+      'Update Feature 7 
+      If LCase(Feature7) = "y" Then
+        WhereString = WhereString & " , Feature7 = 1"
+      ElseIf LCase(Feature7) = "n" Then
+        WhereString = WhereString & " , Feature7 = 0"
+      Else
+        WhereString = WhereString & ""
+      End If
+
+      'Update Feature 8 
+      If LCase(Feature8) = "y" Then
+        WhereString = WhereString & " , Feature8 = 1"
+      ElseIf LCase(Feature8) = "n" Then
+        WhereString = WhereString & " , Feature8 = 0"
+      Else
+        WhereString = WhereString & ""
+      End If
+
+      'Update Feature 9 
+      If LCase(Feature9) = "y" Then
+        WhereString = WhereString & " , Feature9 = 1"
+      ElseIf LCase(Feature9) = "n" Then
+        WhereString = WhereString & " , Feature9 = 0"
+      Else
+        WhereString = WhereString & ""
+      End If
+
+      'Update Feature 0 
+      If LCase(Feature0) = "y" Then
+        WhereString = WhereString & " , Feature0 = 1"
+      ElseIf LCase(Feature0) = "n" Then
+        WhereString = WhereString & " , Feature0 = 0"
+      Else
+        WhereString = WhereString & ""
+      End If
+
+
+      'Check for existing service 
+      mySelectQuery = "SELECT ServiceNumber, ServiceID, UserID, OrgUnitID FROM Service WHERE (EndDate IS NULL) AND (ServiceNumber = '" & ServiceNumber & "') AND (ClientID = " & sClientID & ")"
+      MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+      If MyConnection.State.ToString = "Closed" Then
+        MyConnection.Open()
+      End If
+      myReader = MyCommand.ExecuteReader()
+      If myReader.Read() Then
+        'old service
+        sServiceID = myReader("ServiceID")
+        sOldUserID =REDACTED"UserID")
+        sOldOrgID = myReader("OrgUnitID")
+        LogString = LogString & "Existing Service details loaded : " & ServiceNumber & "" & vbCrLf
+      Else
+        'new Service
+        mySelectQuery = "INSERT INTO Service (ServiceNumber, ClientID) VALUES ('" & ServiceNumber & "', " & sClientID & ") ;select @@identity"
+        MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection3)
+        If MyConnection3.State.ToString = "Closed" Then
+          MyConnection3.Open()
+        End If
+        myReader3 = MyCommand.ExecuteReader()
+        myReader3.Read()
+        sServiceID = myReader3.Item(0).ToString()
+        myReader3.Close()
+        sOldUserID = ""
+        sOldOrgID = ""
+        LogString = LogString & "New Service Inserted : " & ServiceNumber & "" & vbCrLf
+      End If
+      myReader.Close()
+
+      mySelectQuery = "UPDATE Service SET ServiceID = " & sServiceID & " " & WhereString & " WHERE UID = "REDACTED""
+      MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection3)
+      Trace.Write(mySelectQuery)
+      If MyConnection3.State.ToString = "Closed" Then
+        MyConnection3.Open()
+      End If
+      MyCommand.ExecuteNonQuery()
+      MyConnection3.Close()
+      LogString = LogString & "Service details updated: " & ServiceNumber & "" & vbCrLf
+
+    End If
+
+    If sOldUserID <> "" Then
+      If sOldUserID <> sUserID Then
+        Trace.Write("Relocate Service - " & sServiceID & " || " & sClientID & " || " & sOldUserID & " || " & sUserID & " || " & sOldOrgID & " || " & OrgUnitParentID & " || " & sMoveDate & " || " & bAllBilling & " || " & Session("OperationalDB") & vbCrLf)
+        LogString = LogString & "Relocate Service - " & sServiceID & " || " & sClientID & " || " & sOldUserID & " || " & sUserID & " || " & sOldOrgID & " || " & OrgUnitParentID & " || " & sMoveDate & " || " & bAllBilling & " || " & Session("OperationalDB") & vbCrLf
+        br.RelocateService(sServiceID, sClientID, sOldUserID, sUserID, sOldOrgID, OrgUnitParentID.ToString, sMoveDate, bAllBilling, Session("OperationalDB"))
+        'Trace.Write("Relocate Service")
+      End If
+    End If
+
+  End Sub
+  Sub ProcessUser(ByVal FirstName, ByVal LastName, ByVal Email, ByVal CostCode, ByVal Custom1, ByVal Custom2, ByVal Custom3, ByVal Custom4, ByVal EmployeeBudget)
+    sUserID = ""
+    Dim WhereString As String
+    If FirstName = "" And LastName = "" Then
+      Call ErrorMessage("Blank User", lineCounter, 2)
+    Else
+      'process user
+      If Email = "" Then
+        WhereString = WhereString & ""
+      Else
+        WhereString = WhereString & " , Email = '" & Email & "'"
+      End If
+
+      If CostCode = "" Then
+        WhereString = WhereString & ""
+      Else
+        WhereString = WhereString & " , CostCode = '" & CostCode & "'"
+      End If
+
+      If Custom1 = "" Then
+        WhereString = WhereString & ""
+      Else
+        WhereString = WhereString & " , Custom1 = '" & Custom1 & "'"
+      End If
+      If Custom2 = "" Then
+        WhereString = WhereString & ""
+      Else
+        WhereString = WhereString & " , Custom2 = '" & Custom2 & "'"
+      End If
+      If Custom3 = "" Then
+        WhereString = WhereString & ""
+      Else
+        WhereString = WhereString & " , Custom3 = '" & Custom3 & "'"
+      End If
+      If Custom4 = "" Then
+        WhereString = WhereString & ""
+      Else
+        WhereString = WhereString & " , Custom4 = '" & Custom4 & "'"
+      End If
+      If EmployeeBudget = "" Then
+        WhereString = WhereString & ""
+      Else
+        WhereString = WhereString & " , Budget = " & CDbl(EmployeeBudget) & ""
+      End If
+
+
+      mySelectQuery = "SELECT FirstName, LastName, UserID FROM Users WHERE (EndDate IS NULL) AND (ClientID = " & sClientID & ") AND (FirstName = '" & FirstName & "') AND (LastName = '" & LastName & "')"
+      'Trace.Write(mySelectQuery)
+      MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+      If MyConnection.State.ToString = "Closed" Then
+        MyConnection.Open()
+      End If
+      myReader = MyCommand.ExecuteReader()
+      If myReader.Read() Then
+        'Existing User
+        sUserID =REDACTED"UserID").ToString()
+        LogString = LogString & "User '" & FirstName & " " & LastName & "' Loaded." & vbCrLf
+      Else
+        'New User
+        mySelectQuery = "INSERT INTO Users ( FirstName, LastName, ClientID) VALUES ('" & FirstName & "', '" & LastName & "', " & sClientID & ") ;select @@identity"
+        MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection3)
+        If MyConnection3.State.ToString = "Closed" Then
+          MyConnection3.Open()
+        End If
+        myReader3 = MyCommand.ExecuteReader()
+        myReader3.Read()
+        sUserID =REDACTED
+        myReader3.Close()
+        LogString = LogString & "New User '" & FirstName & " " & LastName & "' Inserted.(" & sUserID & ")" & vbCrLf
+      End If
+      myReader.Close()
+
+      'Update User
+      mySelectQuery = "UPDATE Users SET UserID = "REDACTED" " & WhereString & " WHERE UID = "REDACTED""
+      'Trace.Write(mySelectQuery)
+      MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection3)
+      If MyConnection3.State.ToString = "Closed" Then
+        MyConnection3.Open()
+      End If
+      MyCommand.ExecuteNonQuery()
+      MyConnection3.Close()
+      LogString = LogString & "User '" & FirstName & " " & LastName & "' Updated(" & sUserID & ")" & vbCrLf
+
+      If sServiceID <> "" Then
+        mySelectQuery = "UPDATE Service SET UserID = "REDACTED" WHERE UID = "REDACTED""
+        MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection3)
+        If MyConnection3.State.ToString = "Closed" Then
+          MyConnection3.Open()
+        End If
+        MyCommand.ExecuteNonQuery()
+        MyConnection3.Close()
+        LogString = LogString & "Service details Linked" & vbCrLf
+      End If
+
+    End If
+    If sOldOrgID <> "" Then
+      If sOldOrgID <> OrgUnitParentID Then
+        LogString = LogString & "Relocate User - " & sClientID & " || " & sUserID & " || " & sOldOrgID & " || " & OrgUnitParentID & " || " & sMoveDate & " || " & bAllBilling & " || " & Session("OperationalDB") & vbCrLf
+        br.RelocateUser(sClientID, sUserID, sOldOrgID, OrgUnitParentID.ToString, sMoveDate, bAllBilling, Session("OperationalDB"))
+      End If
+    End If
+
+  End Sub
+  Sub ProcessAssets(ByVal lineArray As Array)
+    Dim i As Integer
+    Dim assetCounter As Integer
+    Dim AssetTypeID As Integer
+    Dim AssetManufacturerID As Integer
+    Dim AssetListID As Integer
+    Dim WhereString As String
+    Dim AssetID As Integer
+
+    assetCounter = 0
+
+    If noAssets > 0 Then
+      For i = 0 To noAssets - 1
+        WhereString = ""
+        assetCounter = (i * 6)
+        If lineArray(AssetTypeCOL + assetCounter) = "" Or lineArray(AssetNameCOL + assetCounter) = "" Then
+          'skip
+        Else
+          'check
+          mySelectQuery = "SELECT AssetTypeID FROM AssetType WHERE (EndDate IS NULL) AND (AssetTypeName = '" & Trim(lineArray(AssetTypeCOL + assetCounter)) & "')"
+          MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+          If MyConnection.State.ToString = "Closed" Then
+            MyConnection.Open()
+          End If
+          myReader = MyCommand.ExecuteReader()
+          If myReader.Read() Then
+            AssetTypeID = myReader("AssetTypeID")
+          End If
+          myReader.Close()
+
+          mySelectQuery = "SELECT AssetManufacturerID FROM AssetManufacturer WHERE  (EndDate IS NULL) AND (ManufacturerName = '" & Trim(lineArray(AssetManafacturerCOL + assetCounter)) & "')"
+          MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+          If MyConnection.State.ToString = "Closed" Then
+            MyConnection.Open()
+          End If
+          myReader = MyCommand.ExecuteReader()
+          If myReader.Read() Then
+            AssetManufacturerID = myReader("AssetManufacturerID")
+          End If
+          myReader.Close()
+
+          mySelectQuery = "SELECT AssetListID FROM AssetList WHERE (EndDate IS NULL) AND (AssetName  = '" & Trim(lineArray(AssetNameCOL + assetCounter)) & "') AND (AssetTypeID = " & AssetTypeID & ") AND (AssetManufacturerID = " & AssetManufacturerID & ")"
+          MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+          If MyConnection.State.ToString = "Closed" Then
+            MyConnection.Open()
+          End If
+          myReader = MyCommand.ExecuteReader()
+          If myReader.Read() Then
+            AssetListID = myReader("AssetListID")
+            LogString = LogString & "Asset Loaded." & vbCrLf
+          Else
+            'insert new item in asset list
+            mySelectQuery = "INSERT INTO AssetList (AssetManufacturerID, AssetTypeID, AssetName, isVisible) VALUES (" & AssetManufacturerID & ", " & AssetTypeID & ", '" & Trim(lineArray(AssetNameCOL + assetCounter)) & "',1) ;select @@identity"
+            MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection3)
+            If MyConnection3.State.ToString = "Closed" Then
+              MyConnection3.Open()
+            End If
+            myReader3 = MyCommand.ExecuteReader()
+            myReader3.Read()
+            AssetListID = myReader3.Item(0).ToString()
+            myReader3.Close()
+            LogString = LogString & "New Asset '" & Trim(lineArray(AssetNameCOL + assetCounter)) & "' Inserted." & vbCrLf
+
+            mySelectQuery = "UPDATE AssetList SET AssetListID = " & AssetListID & " WHERE UID = "REDACTED""
+            MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection3)
+            If MyConnection3.State.ToString = "Closed" Then
+              MyConnection3.Open()
+            End If
+            MyCommand.ExecuteNonQuery()
+            MyConnection3.Close()
+          End If
+          myReader.Close()
+
+
+          If Trim(lineArray(IMEESNNumberCOL + assetCounter)) = "" Then
+            'skip IME search
+            WhereString = ""
+            mySelectQuery = "INSERT INTO Asset (UserID, ServiceID, ClientID) VALUES (" & sUserID & ", " & sServiceID & ", " & sClientID & ") ;select @@identity"
+            MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection3)
+            If MyConnection3.State.ToString = "Closed" Then
+              MyConnection3.Open()
+            End If
+            myReader3 = MyCommand.ExecuteReader()
+            myReader3.Read()
+            AssetID = myReader3.Item(0).ToString()
+            myReader3.Close()
+            LogString = LogString & "New Asset '" & Trim(lineArray(AssetNameCOL + assetCounter)) & "' Inserted." & vbCrLf
+          Else
+            'find asset id related to IME
+            mySelectQuery = "SELECT UID, ServiceID, UserID FROM Asset WHERE (EndDate IS NULL) AND (IMENumber   = '" & Trim(lineArray(IMEESNNumberCOL + assetCounter)) & "')"
+            MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+            If MyConnection.State.ToString = "Closed" Then
+              MyConnection.Open()
+            End If
+            myReader = MyCommand.ExecuteReader()
+            If myReader.Read() Then
+              'IME already in database
+              'updateime
+              AssetID = myReader("UID")
+              Dim br As New BillingRelocation
+              br.RelocateAssets(AssetID, myReader("ServiceID"), sServiceID, myReader("UserID"), sUserID, sClientID, sOldOrgID, OrgUnitParentID, Session("OperationalDB"))
+            Else
+              'New IME
+              'addime
+              mySelectQuery = "INSERT INTO Asset (UserID, ServiceID, ClientID, IMENumber) VALUES (" & sUserID & ", " & sServiceID & ", " & sClientID & ",'" & Trim(lineArray(IMEESNNumberCOL + assetCounter)) & "') ;select @@identity"
+              MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection3)
+              If MyConnection3.State.ToString = "Closed" Then
+                MyConnection3.Open()
+              End If
+              myReader3 = MyCommand.ExecuteReader()
+              myReader3.Read()
+              AssetID = myReader3.Item(0).ToString()
+              myReader3.Close()
+              LogString = LogString & "New Asset Unique Number '" & Trim(lineArray(AssetNameCOL + assetCounter)) & "' Inserted." & vbCrLf
+
+            End If
+            myReader.Close()
+          End If
+          WhereString = WhereString & ", AssetlistID = " & AssetListID & ""
+          If Trim(lineArray(AssetNumberCOL + assetCounter)) = "" Then
+            'skip
+            WhereString = WhereString & ""
+          Else
+            'update
+            WhereString = WhereString & ", AssetNumber = '" & Trim(lineArray(AssetNumberCOL + assetCounter)) & "'"
+          End If
+          If Trim(lineArray(SerialNumberCOL + assetCounter)) = "" Then
+            'skip
+            WhereString = WhereString & ""
+          Else
+            'Update
+            WhereString = WhereString & ", SerialNumber = '" & Trim(lineArray(SerialNumberCOL + assetCounter)) & "'"
+          End If
+
+          WhereString = WhereString & ", UserID = "REDACTED", ServiceID = " & sServiceID & ", ClientID = " & sClientID & ", OrgUnitID = " & OrgUnitParentID & ""
+          mySelectQuery = "UPDATE Asset SET AssetID = " & AssetID & WhereString & " WHERE UID = "REDACTED""
+          Trace.Write(mySelectQuery)
+          MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection3)
+          If MyConnection3.State.ToString = "Closed" Then
+            MyConnection3.Open()
+          End If
+          MyCommand.ExecuteNonQuery()
+          MyConnection3.Close()
+
+        End If
+      Next
+    End If
+  End Sub
+  Sub InsertNewOrgUnit(ByVal OrgUnitName, ByVal OrgUnitParent, ByVal OrgUnitLevel)
+    mySelectQuery = "INSERT INTO ClientOrganisationUnit (OrgUnitName, OrgUnitParent, OrgUnitState, StartDate, clientID, OrgUnitLevel) VALUES ('" & OrgUnitName.ToString() & "', " & OrgUnitParent.ToString & ", " & ImportStateID & ", '" & Now & "', " & sClientID & ", " & OrgUnitLevel & ") ;select @@identity"
+    MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+    myReader.Close()
+    myReader3 = MyCommand.ExecuteReader()
+    myReader3.Read()
+    OrgUnitParentID = myReader3.Item(0).ToString()
+    myReader3.Close()
+    mySelectQuery = "UPDATE ClientOrganisationUnit SET OrgUnitID = " + OrgUnitParentID.ToString() + " WHERE UID = "REDACTED"Closed" Then
+      MyConnection.Open()
+    End If
+    MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+    MyCommand.ExecuteNonQuery()
+    LogString = LogString & "Org Unit : '" & OrgUnitName & "' Created, Level : " & OrgUnitLevel & vbCrLf
+  End Sub
+  Sub ErrorMessage(ByVal ErrorText, ByVal ErrorLine, ByVal ErrorType)
+    Dim ErrorColor As String
+    Dim sErrorType As String
+    If ErrorType = 3 Then
+      sErrorType = "Critical "
+      ErrorColor = "#ff0000"
+      CriticalError = True
+      btnDone.Visible = False
+    ElseIf ErrorType = 2 Then
+      sErrorType = "Possible "
+      ErrorColor = "#ff6633"
+    End If
+    LogString = LogString & sErrorType & "Error : " & ErrorText & " On Line :" & ErrorLine & "" & vbCrLf
+  End Sub
+  Sub CheckRelocation()
+    bAllBilling = False
+    If sMoveType <> 3 Then
+      If sMoveType = 1 Then
+        bAllBilling = True
+      End If
+    End If
+    LogString = LogString & "Relocating: " & vbCrLf
+    'Trace.Write(sServiceID & ", " & sClientID & ", " & sOldUserID & ", " & sUserID & ", " & sOldOrgID & ", " & OrgUnitParentID & ", " & sMoveDate & ", " & bAllBilling & ", " & Session("OperationalDB"))
+    If sOldOrgID <> "" Then
+      If sOldOrgID <> OrgUnitParentID Then
+        LogString = LogString & "Relocate User - " & sClientID & " || " & sUserID & " || " & sOldOrgID & " || " & OrgUnitParentID & " || " & sMoveDate & " || " & bAllBilling & " || " & Session("OperationalDB") & vbCrLf
+        br.RelocateUser(sClientID, sUserID, sOldOrgID, OrgUnitParentID, sMoveDate, bAllBilling, Session("OperationalDB"))
+        'Trace.Write("Relocate User")
+        If sOldUserID <> "" Then
+          If sOldUserID <> sUserID Then
+            LogString = LogString & "Relocate Service - " & sServiceID & " || " & sClientID & " || " & sOldUserID & " || " & sUserID & " || " & sOldOrgID & " || " & OrgUnitParentID & " || " & sMoveDate & " || " & bAllBilling & " || " & Session("OperationalDB") & vbCrLf
+            br.RelocateService(sServiceID, sClientID, sOldUserID, sUserID, sOldOrgID, OrgUnitParentID, sMoveDate, bAllBilling, Session("OperationalDB"))
+            'Trace.Write("Relocate Service")
+          End If
+        End If
+      End If
+    End If
+
+
+  End Sub
+  Sub WriteLogToFile(ByVal logStr)
+    file.Write(logStr)
+    tbxLogWindow.Text = tbxLogWindow.Text & LogString
+    LogString = ""
+  End Sub
+  Function CheckArraySize(ByVal thisLine)
+    Dim arrayLength As Integer
+    Dim tempStr As String
+    Dim i As Integer
+    Dim RequiredLength As Integer
+    RequiredLength = Feature0COL + (noAssets * 6)
+    arrayLength = UBound(thisLine)
+    tempStr = thisLine(0)
+    For i = 1 To arrayLength
+      tempStr = tempStr & "," & thisLine(i)
+    Next
+    For i = 0 To (RequiredLength - arrayLength)
+      tempStr = tempStr & ","
+    Next
+    Return ParseLine(tempStr)
+  End Function
+  Private Shared Function ParseLine(ByVal oneLine As String) As String()
+    ' Returns an array containing the values of the comma-separated fields.
+
+    ' This pattern actually recognizes the correct commas.
+    ' The Regex.Split() command later gets text between the commas.
+    Dim pattern As String = ",(?=(?:[^""]*""[^""]*"")*(?![^""]*""))"
+    Dim r As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex(pattern)
+    Return r.Split(oneLine)
+  End Function
+  Private Sub btnDone_Click(ByVal sender As System.Object, ByVal e As System.Web.UI.ImageClickEventArgs) Handles btnDone.Click
+    Response.Redirect("default.aspx")
+  End Sub
+
+End Class

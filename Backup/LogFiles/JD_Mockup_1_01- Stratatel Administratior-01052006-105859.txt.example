@@ -1,0 +1,140 @@
+Client Name: Test Asset Importer
+File Name: JD_Mockup_1_01.xls
+Revision Number: 1.01
+Date Uploaded: 22/03/2006 8:28:33 AM
+Imported By: Blank User Details
+Import Type: Add Assets
+Move Type: Move All
+
+--------------------
+
+Line Number 3
+Org Unit Loaded: Marketing & Sales(1903)
+Org Unit Loaded: Sales(1905)
+Org Unit Loaded: ACT(1906)
+User 'Tom Bonarius' Loaded.
+User 'Tom Bonarius' Updated(7697)
+Carrier Loaded: Telstra Mobile
+Existing Service details loaded : 0407084822
+Service details updated: 0407084822
+Relocate Service - 14135 || 9 || 7650 || 7697 || 1902 || 1906 ||  || True || Server=(local);Database=development_test;User ID=REDACTED;Password=REDACTED;Connect Timeout=60;
+Asset Loaded.
+
+Line Number 4
+Org Unit Loaded: Marketing & Sales(1903)
+Org Unit Loaded: Sales(1905)
+Org Unit Loaded: NSW(1907)
+User 'Tom Carr' Loaded.
+User 'Tom Carr' Updated(7698)
+Service details Linked
+Relocate User - 9 || 7698 || 1902 || 1907 ||  || True || Server=(local);Database=development_test;User ID=REDACTED;Password=REDACTED;Connect Timeout=60;
+Carrier Loaded: Telstra Mobile
+Existing Service details loaded : 0439983855
+Service details updated: 0439983855
+Relocate Service - 14136 || 9 || 7651 || 7698 || 1902 || 1907 ||  || True || Server=(local);Database=development_test;User ID=REDACTED;Password=REDACTED;Connect Timeout=60;
+Asset Loaded.
+
+Line Number 5
+Org Unit Loaded: Marketing & Sales(1903)
+Org Unit Loaded: Sales(1905)
+Org Unit Loaded: VIC(1911)
+User 'Robert Clarke' Loaded.
+User 'Robert Clarke' Updated(7699)
+Service details Linked
+Relocate User - 9 || 7699 || 1902 || 1911 ||  || True || Server=(local);Database=development_test;User ID=REDACTED;Password=REDACTED;Connect Timeout=60;
+Carrier Loaded: Telstra Mobile
+Existing Service details loaded : 0437883014
+Service details updated: 0437883014
+Relocate Service - 14137 || 9 || 7652 || 7699 || 1902 || 1911 ||  || True || Server=(local);Database=development_test;User ID=REDACTED;Password=REDACTED;Connect Timeout=60;
+Asset Loaded.
+
+Line Number 6
+Org Unit Loaded: Marketing & Sales(1903)
+Org Unit Loaded: Sales(1905)
+Org Unit Loaded: QLD(1908)
+New User 'Alan Munro' Inserted.(32099)
+User 'Alan Munro' Updated(32099)
+Service details Linked
+Relocate User - 9 || 32099 || 1902 || 1908 ||  || True || Server=(local);Database=development_test;User ID=REDACTED;Password=REDACTED;Connect Timeout=60;
+Carrier Loaded: Telstra Mobile
+New Service Inserted : 0412345227
+Service details updated: 0412345227
+
+Line Number 7
+Org Unit Loaded: Marketing & Sales(1903)
+Org Unit Loaded: Sales(1905)
+Org Unit Loaded: WA(1912)
+User 'Chris Musgrove' Loaded.
+User 'Chris Musgrove' Updated(7647)
+Service details Linked
+Carrier Loaded: Telstra Mobile
+Existing Service details loaded : 0437151190
+Service details updated: 0437151190
+Relocate Service - 14139 || 9 || 7654 || 7647 || 1902 || 1912 ||  || True || Server=(local);Database=development_test;User ID=REDACTED;Password=REDACTED;Connect Timeout=60;
+
+Line Number 8
+Org Unit Loaded: Marketing & Sales(1903)
+Org Unit Loaded: Sales(1905)
+Org Unit Loaded: NSW(1907)
+User 'Chris Padgham' Loaded.
+User 'Chris Padgham' Updated(7648)
+Service details Linked
+Relocate User - 9 || 7648 || 1902 || 1907 ||  || True || Server=(local);Database=development_test;User ID=REDACTED;Password=REDACTED;Connect Timeout=60;
+Carrier Loaded: Telstra Mobile
+Existing Service details loaded : 0439924514
+Service details updated: 0439924514
+Relocate Service - 14140 || 9 || 7655 || 7648 || 1902 || 1907 ||  || True || Server=(local);Database=development_test;User ID=REDACTED;Password=REDACTED;Connect Timeout=60;
+
+Line Number 9
+Org Unit Loaded: Marketing & Sales(1903)
+Org Unit Loaded: Sales(1905)
+Org Unit Loaded: NSW(1907)
+User 'Chris Palmer' Loaded.
+User 'Chris Palmer' Updated(7649)
+Service details Linked
+Relocate User - 9 || 7649 || 1902 || 1907 ||  || True || Server=(local);Database=development_test;User ID=REDACTED;Password=REDACTED;Connect Timeout=60;
+Carrier Loaded: Telstra Mobile
+Existing Service details loaded : 0418915735
+Service details updated: 0418915735
+Relocate Service - 14141 || 9 || 7656 || 7649 || 1902 || 1907 ||  || True || Server=(local);Database=development_test;User ID=REDACTED;Password=REDACTED;Connect Timeout=60;
+
+Line Number 10
+Org Unit Loaded: Marketing & Sales(1903)
+Org Unit Loaded: Sales(1905)
+Org Unit Loaded: WA(1912)
+New User 'Colin Patel' Inserted.(32103)
+User 'Colin Patel' Updated(32103)
+Service details Linked
+Relocate User - 9 || 32103 || 1902 || 1912 ||  || True || Server=(local);Database=development_test;User ID=REDACTED;Password=REDACTED;Connect Timeout=60;
+Carrier Loaded: Telstra Mobile
+Existing Service details loaded : 0439942560
+Service details updated: 0439942560
+Relocate Service - 14142 || 9 || 7657 || 32103 || 1902 || 1912 ||  || True || Server=(local);Database=development_test;User ID=REDACTED;Password=REDACTED;Connect Timeout=60;
+
+Line Number 11
+Org Unit Loaded: Marketing & Sales(1903)
+Org Unit Loaded: Sales(1905)
+Org Unit Loaded: VIC(1911)
+User 'Sterling Paul' Loaded.
+User 'Sterling Paul' Updated(7651)
+Service details Linked
+Relocate User - 9 || 7651 || 1902 || 1911 ||  || True || Server=(local);Database=development_test;User ID=REDACTED;Password=REDACTED;Connect Timeout=60;
+Carrier Loaded: Telstra Mobile
+Existing Service details loaded : 0439983855
+Service details updated: 0439983855
+Relocate Service - 14136 || 9 || 7698 || 7651 || 1907 || 1911 ||  || True || Server=(local);Database=development_test;User ID=REDACTED;Password=REDACTED;Connect Timeout=60;
+
+Line Number 12
+Org Unit Loaded: Marketing & Sales(1903)
+Org Unit Loaded: Sales(1905)
+Org Unit : 'NT' Created, Level : 1
+User 'Robert Peacock' Loaded.
+User 'Robert Peacock' Updated(7652)
+Service details Linked
+Relocate User - 9 || 7652 || 1907 || 14058 ||  || True || Server=(local);Database=development_test;User ID=REDACTED;Password=REDACTED;Connect Timeout=60;
+Carrier Loaded: Telstra Mobile
+Existing Service details loaded : 0407447525
+Service details updated: 0407447525
+Relocate Service - 14144 || 9 || 7659 || 7652 || 1902 || 14058 ||  || True || Server=(local);Database=development_test;User ID=REDACTED;Password=REDACTED;Connect Timeout=60;
+
+End File

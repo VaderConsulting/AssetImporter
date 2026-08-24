@@ -1,0 +1,115 @@
+Public Class SelectFile
+    Inherits System.Web.UI.Page
+
+#Region " Web Form Designer Generated Code "
+
+    'This call is required by the Web Form Designer.
+    <System.Diagnostics.DebuggerStepThrough()> Private Sub InitializeComponent()
+
+    End Sub
+    Protected WithEvents ddlFileName As System.Web.UI.WebControls.DropDownList
+    Protected WithEvents btnValidate As System.Web.UI.WebControls.Button
+    Dim mySqlDataReader As System.Data.SqlClient.SqlDataReader
+    Dim MyConnection As System.Data.SqlClient.SqlConnection
+    Dim MyConnection2 As System.Data.SqlClient.SqlConnection
+    Dim mySelectQuery As String
+    Dim myReader As System.Data.SqlClient.SqlDataReader
+    Dim MyCommand As New System.Data.SqlClient.SqlCommand
+    Protected WithEvents rptFileRegister As System.Web.UI.WebControls.Repeater
+    Protected WithEvents ddlClientSelect As System.Web.UI.WebControls.DropDownList
+    Protected WithEvents Back As System.Web.UI.WebControls.ImageButton
+
+    'NOTE: The following placeholder declaration is required by the Web Form Designer.
+    'Do not delete or move it.
+    Private designerPlaceholderDeclaration As System.Object
+
+    Private Sub Page_Init(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Init
+        'CODEGEN: This method call is required by the Web Form Designer
+        'Do not modify it using the code editor.
+        InitializeComponent()
+    End Sub
+
+#End Region
+
+    Private Sub Page_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
+        'Put user code to initialize the page here
+        MyConnection = New System.Data.SqlClient.SqlConnection(Session("OperationalDB"))
+        If Not IsPostBack Then
+            Call LoadClients()
+        End If
+    End Sub
+    Sub LoadClients()
+        Trace.Write("Load Clients")
+        ddlClientSelect.Items.Add(New ListItem("Please Select a Client", "-1"))
+        mySelectQuery = "SELECT ClientID, Clientname FROM Client WHERE EndDate IS NULL"
+        MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection)
+        If MyConnection.State.ToString = "Closed" Then
+            MyConnection.Open()
+        End If
+        myReader = MyCommand.ExecuteReader()
+        If myReader.HasRows Then
+            Do While myReader.Read()
+                ddlClientSelect.Items.Add(New ListItem(myReader("Clientname"), myReader("ClientID")))
+            Loop
+        End If
+        myReader.Close()
+        Trace.Write("Clients Loaded")
+    End Sub
+    Sub LoadBills(ByVal ClientID)
+        mySelectQuery = "SELECT * FROM ImportAssetRegister WHERE (ClientID = " & ClientID & ") AND (UploadChecked <> 0) AND (UploadSuccessful <> 1) AND (UploadVerified <> - 1) AND (UploadRemoved = 0) ORDER BY UID DESC"
+        Trace.Write(mySelectQuery)
+        MyConnection = New System.Data.SqlClient.SqlConnection(ConfigurationSettings.AppSettings("OperationalDB"))
+        Dim MyCommand As New System.Data.SqlClient.SqlDataAdapter(mySelectQuery, MyConnection)
+        ''Trace.Write(mySelectQuery)
+        Dim DS As New DataSet
+        MyCommand.Fill(DS, "ImportAssetRegister")
+
+        rptFileRegister.DataSource = DS.Tables("ImportAssetRegister").DefaultView
+        rptFileRegister.DataBind()
+
+    End Sub
+    Public Function GetImportState(ByVal StateID)
+        mySelectQuery = "SELECT State FROM State WHERE UID = "REDACTED"OperationalDB"))
+        MyCommand = New System.Data.SqlClient.SqlCommand(mySelectQuery, MyConnection2)
+        If MyConnection2.State.ToString = "Closed" Then
+            MyConnection2.Open()
+        End If
+        myReader = MyCommand.ExecuteReader()
+        If myReader.Read() Then
+            Return myReader("State")
+        End If
+        myReader.Close()
+    End Function
+    Public Function GetImportType(ByVal typeID)
+        If typeID = "1" Then
+            Return "Add Assets"
+        ElseIf typeID = "2" Then
+            Return "Skip Assets"
+        ElseIf typeID = "3" Then
+            Return "Update Assets"
+        ElseIf typeID = "4" Then
+            Return "Org Structure"
+        Else
+            Return "Error"
+        End If
+    End Function
+    Public Function GetMoveType(ByVal typeID)
+        If typeID = "1" Then
+            Return "Move All"
+        ElseIf typeID = "2" Then
+            Return "Move From"
+        ElseIf typeID = "3" Then
+            Return "Don't Move"
+        Else
+            Return "Error"
+        End If
+    End Function
+
+    Private Sub ddlClientSelect_SelectedIndexChanged(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles ddlClientSelect.SelectedIndexChanged
+        Call LoadBills(ddlClientSelect.SelectedValue.ToString)
+    End Sub
+
+    Private Sub Back_Click(ByVal sender As System.Object, ByVal e As System.Web.UI.ImageClickEventArgs) Handles Back.Click
+        Response.Redirect("default.aspx")
+    End Sub
+End Class

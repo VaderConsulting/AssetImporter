@@ -1,0 +1,108 @@
+# Build output
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Legacy source-control bindings
+*.scc
+*.vssscc
+*.vspscc
+
+# NuGet
+packages/
+
+
+# Secrets / credentials (never upload)
+*.pfx
+*.p12
+*.pem
+*.key
+.env
+**/appsettings.*.local.json
+# Logs and temp
+*.log
+*.tmp
+*.bak
+
+# Redacted originals (see *.example files)
+Backup/FileUploadRecord.aspx.vb
+Backup/AssetExport.aspx.vb
+Backup/UploadAssets.aspx.vb
+Backup/SelectFile.aspx.vb
+Backup/removeFile.aspx.vb
+Backup/DefAssetImporter.aspx.vb
+Backup/SelectFile.aspx
+Backup/DefTempFix.aspx.vb
+Backup/DefQuickFix.aspx.vb
+Backup/DefOrgImporter.aspx.vb
+Backup/AssetValidator.aspx.vb
+Backup/DefLineValidator.aspx.vb
+Backup/AssetImporter.vbproj
+Backup/AssetProcess.aspx.vb
+Backup/AssetSheets/Def - Importer 0.010 VP changes.csv
+Backup/DefImportedSheets/BrokenUp/NECDefExport_2.txt
+Backup/DefImportedSheets/BrokenUp/NECDefExport_7.txt
+Backup/DefImportedSheets/BrokenUp/NECDefExport_10.txt
+Backup/DefImportedSheets/BrokenUp/NECDefExport_3.txt
+Backup/DefImportedSheets/BrokenUp/NECDefExport_12.txt
+Backup/DefImportedSheets/BrokenUp/NECDefExport_11.txt
+Backup/DefImportedSheets/BrokenUp/NECDefExport_6.txt
+Backup/DefImportedSheets/BrokenUp/NECDefExport_4.txt
+Backup/DefImportedSheets/BrokenUp/NECDefExport_8.txt
+Backup/DefImportedSheets/BrokenUp/NECDefExport_5.txt
+Backup/DefImportedSheets/BrokenUp/NECDefExport_1.txt
+Backup/DefImportedSheets/BrokenUp/NECDefExport_9.txt
+Backup/DefImportedSheets/old/Noname3.txt
+Backup/DefImportedSheets/old/Noname2.txt
+Backup/DefImportedSheets/old/expdeltafltmgr_20060516.txt
+Backup/DefImportedSheets/old/zzNoname2.txt
+Backup/DefImportedSheets/old/temp.txt
+Backup/DefImportedSheets/old/expfiletofltmgr_FINALVERS_210406.txt
+Backup/DefImportedSheets/old/expfiletofltmgr.txt
+Backup/DefImportedSheets/old/export_NEC_to_FleetManager_12APR06_CSV.txt
+Backup/DefImportedSheets/old/expfiletofltmgr_FINALVERS_210406-UPDATE.txt
+Backup/DefImportedSheets/old/Noname4.txt
+Backup/DefSheetsImported/dodmob-delta-20060615.txt
+Backup/DefSheetsImported/dodmob-delta-20060616.txt
+Backup/DefSheetsImported/dodmob-delta-20060512.txt
+Backup/DefSheetsImported/dodmob-delta-20060704.txt
+Backup/DefSheetsImported/dodmob-delta-20060518.txt
+Backup/DefSheetsImported/dodmob-delta-20060619.txt
+Backup/DefSheetsImported/dodmob-delta-20060621.txt
+Backup/DefSheetsImported/dodmob-delta-20060608.txt
+Backup/DefSheetsImported/dodmob-delta-20060622.txt
+Backup/DefSheetsImported/dodmob-delta-20060614.txt
+Backup/DefSheetsImported/dodmob-delta-20060613.txt
+Backup/DefSheetsImported/dodmob-delta-20060607.txt
+Backup/DefSheetsImported/dodmob-delta-20060609.txt
+Backup/DefSheets/dodmob-delta-20060706.txt
+Backup/DefLogFiles/DEF-dodmob-delta-20060616-Stratatel Administrator - jamesd-22062006-154157.txt
+Backup/DefLogFiles/DEF-dodmob-delta-20060512-Stratatel Administrator - jamesd-22062006-153950.txt
+Backup/DefLogFiles/DEF-dodmob-delta-20060607-Stratatel Administrator - jamesd-22062006-154003.txt
+Backup/DefLogFiles/DEF-dodmob-delta-20060518-Stratatel Administrator - jamesd-22062006-153954.txt
+Backup/DefLogFiles/DEF-noname4- Stratatel Administratior-21042006-095415.txt
+Backup/DefLogFiles/DEF-dodmob-delta-20060704-Stratatel Administrator - jamesd-07072006-111407.txt
+Backup/DefLogFiles/DEF-dodmob-delta-20060621-Stratatel Administrator - jamesd-29062006-083245.txt
+Backup/DefLogFiles/DEF-dodmob-delta-20060614-Stratatel Administrator - jamesd-22062006-154144.txt
+Backup/DefLogFiles/DEF-expdeltafltmgr_20060516- Stratatel Administratior-18052006-132752.txt
+Backup/DefLogFiles/DEF-dodmob-delta-20060704-Stratatel Administrator - jamesd-07072006-105844.txt
+Backup/DefLogFiles/DEF-dodmob-delta-20060621-Stratatel Administrator - jamesd-22062006-154224.txt
+Backup/DefLogFiles/DEF-dodmob-delta-20060706-Stratatel Administrator - jamesd-07072006-102319.txt
+Backup/DefLogFiles/DEF-dodmob-delta-20060622-Stratatel Administrator - jamesd-28062006-125037.txt
+Backup/DefLogFiles/DEF-expfiletofltmgr_FINALVERS_210406- Stratatel Administratior-21042006-161213.txt
+Backup/DefLogFiles/DEF-dodmob-delta-20060608-Stratatel Administrator - jamesd-22062006-154005.txt
+Backup/DefLogFiles/DEF-dodmob-delta-20060706-Stratatel Administrator - jamesd-07072006-120043.txt
+Backup/DefLogFiles/DEF-dodmob-delta-20060704-Stratatel Administrator - jamesd-07072006-111113.txt
+Backup/DefLogFiles/DEF-noname4- Stratatel Administratior-21042006-095246.txt
+Backup/DefLogFiles/DEF-dodmob-delta-20060615-Stratatel Administrator - jamesd-22062006-154151.txt
+Backup/DefLogFiles/DEF-dodmob-delta-20060704-Stratatel Administrator - jamesd-07072006-110605.txt
+Backup/DefLogFiles/DEF-dodmob-delta-20060619-Stratatel Administrator - jamesd-22062006-154202.txt
+Backup/DefLogFiles/DEF-dodmob-delta-20060706-Stratatel Administrator - jamesd-07072006-111834.txt
+Backup/DefLogFiles/DEF-noname4- Stratatel Administratior-21042006-094830.txt
+Backup/LogFiles/JD_Mockup_1_01- Stratatel Administratior-01052006-105859.txt

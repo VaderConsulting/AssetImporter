@@ -1,0 +1,383 @@
+<VisualStudioProject>
+    <VisualBasic
+        ProjectType = "Web"
+        ProductVersion = "7.10.3077"
+        SchemaVersion = "2.0"
+        ProjectGuid = "REDACTED"
+    >
+        <Build>
+            <Settings
+                ApplicationIcon = ""
+                AssemblyKeyContainerName = ""
+                AssemblyName = "AssetImporter"
+                AssemblyOriginatorKeyFile = ""
+                AssemblyOriginatorKeyMode = "None"
+                DefaultClientScript = "JScript"
+                DefaultHTMLPageLayout = "Grid"
+                DefaultTargetSchema = "IE50"
+                DelaySign = "false"
+                OutputType = "Library"
+                OptionCompare = "Binary"
+                OptionExplicit = "On"
+                OptionStrict = "Off"
+                RootNamespace = "AssetImporter"
+                StartupObject = ""
+            >
+                <Config
+                    Name = "Debug"
+                    BaseAddress = "285212672"
+                    ConfigurationOverrideFile = ""
+                    DefineConstants = ""
+                    DefineDebug = "true"
+                    DefineTrace = "true"
+                    DebugSymbols = "true"
+                    IncrementalBuild = "true"
+                    Optimize = "false"
+                    OutputPath = "bin\"
+                    RegisterForComInterop = "false"
+                    RemoveIntegerChecks = "false"
+                    TreatWarningsAsErrors = "false"
+                    WarningLevel = "1"
+                />
+                <Config
+                    Name = "Release"
+                    BaseAddress = "285212672"
+                    ConfigurationOverrideFile = ""
+                    DefineConstants = ""
+                    DefineDebug = "false"
+                    DefineTrace = "true"
+                    DebugSymbols = "false"
+                    IncrementalBuild = "false"
+                    Optimize = "true"
+                    OutputPath = "bin\"
+                    RegisterForComInterop = "false"
+                    RemoveIntegerChecks = "false"
+                    TreatWarningsAsErrors = "false"
+                    WarningLevel = "1"
+                />
+            </Settings>
+            <References>
+                <Reference
+                    Name = "System"
+                    AssemblyName = "System"
+                />
+                <Reference
+                    Name = "System.Data"
+                    AssemblyName = "System.Data"
+                />
+                <Reference
+                    Name = "System.Drawing"
+                    AssemblyName = "System.Drawing"
+                />
+                <Reference
+                    Name = "System.Web"
+                    AssemblyName = "System.Web"
+                />
+                <Reference
+                    Name = "System.XML"
+                    AssemblyName = "System.Xml"
+                />
+                <Reference
+                    Name = "MoveBilling"
+                    AssemblyName = "MoveBilling"
+                    HintPath = "bin\MoveBilling.dll"
+                />
+            </References>
+            <Imports>
+                <Import Namespace = "Microsoft.VisualBasic" />
+                <Import Namespace = "System" />
+                <Import Namespace = "System.Collections" />
+                <Import Namespace = "System.Configuration" />
+                <Import Namespace = "System.Data" />
+                <Import Namespace = "System.Drawing" />
+                <Import Namespace = "System.Web" />
+                <Import Namespace = "System.Web.UI" />
+                <Import Namespace = "System.Web.UI.HtmlControls" />
+                <Import Namespace = "System.Web.UI.WebControls" />
+            </Imports>
+        </Build>
+        <Files>
+            <Include>
+                <File
+                    RelPath = "AssemblyInfo.vb"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "AssetExport.aspx"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "AssetExport.aspx.vb"
+                    DependentUpon = "AssetExport.aspx"
+                    SubType = "ASPXCodeBehind"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "AssetExport.aspx.resx"
+                    DependentUpon = "AssetExport.aspx.vb"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "AssetProcess.aspx"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "AssetProcess.aspx.vb"
+                    DependentUpon = "AssetProcess.aspx"
+                    SubType = "ASPXCodeBehind"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "AssetProcess.aspx.resx"
+                    DependentUpon = "AssetProcess.aspx.vb"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "AssetValidator.aspx"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "AssetValidator.aspx.vb"
+                    DependentUpon = "AssetValidator.aspx"
+                    SubType = "ASPXCodeBehind"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "AssetValidator.aspx.resx"
+                    DependentUpon = "AssetValidator.aspx.vb"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "AssetValidatorNEW.aspx"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "AssetValidatorNEW.aspx.vb"
+                    DependentUpon = "AssetValidatorNEW.aspx"
+                    SubType = "ASPXCodeBehind"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "AssetValidatorNEW.aspx.resx"
+                    DependentUpon = "AssetValidatorNEW.aspx.vb"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "DefAssetImporter.aspx"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "DefAssetImporter.aspx.vb"
+                    DependentUpon = "DefAssetImporter.aspx"
+                    SubType = "ASPXCodeBehind"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "DefAssetImporter.aspx.resx"
+                    DependentUpon = "DefAssetImporter.aspx.vb"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "Default.aspx"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "Default.aspx.vb"
+                    DependentUpon = "Default.aspx"
+                    SubType = "ASPXCodeBehind"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Default.aspx.resx"
+                    DependentUpon = "Default.aspx.vb"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "DefDefault.aspx"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "DefDefault.aspx.vb"
+                    DependentUpon = "DefDefault.aspx"
+                    SubType = "ASPXCodeBehind"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "DefDefault.aspx.resx"
+                    DependentUpon = "DefDefault.aspx.vb"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "DefLineValidator.aspx"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "DefLineValidator.aspx.vb"
+                    DependentUpon = "DefLineValidator.aspx"
+                    SubType = "ASPXCodeBehind"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "DefLineValidator.aspx.resx"
+                    DependentUpon = "DefLineValidator.aspx.vb"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "DefOrgImporter.aspx"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "DefOrgImporter.aspx.vb"
+                    DependentUpon = "DefOrgImporter.aspx"
+                    SubType = "ASPXCodeBehind"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "DefOrgImporter.aspx.resx"
+                    DependentUpon = "DefOrgImporter.aspx.vb"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "DefQuickFix.aspx"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "DefQuickFix.aspx.vb"
+                    DependentUpon = "DefQuickFix.aspx"
+                    SubType = "ASPXCodeBehind"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "DefQuickFix.aspx.resx"
+                    DependentUpon = "DefQuickFix.aspx.vb"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "DefTempFix.aspx"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "DefTempFix.aspx.vb"
+                    DependentUpon = "DefTempFix.aspx"
+                    SubType = "ASPXCodeBehind"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "DefTempFix.aspx.resx"
+                    DependentUpon = "DefTempFix.aspx.vb"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "FileUploadRecord.aspx"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "FileUploadRecord.aspx.vb"
+                    DependentUpon = "FileUploadRecord.aspx"
+                    SubType = "ASPXCodeBehind"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "FileUploadRecord.aspx.resx"
+                    DependentUpon = "FileUploadRecord.aspx.vb"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "Global.asax"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "Global.asax.vb"
+                    DependentUpon = "Global.asax"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Global.asax.resx"
+                    DependentUpon = "Global.asax.vb"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "removeFile.aspx"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "removeFile.aspx.vb"
+                    DependentUpon = "removeFile.aspx"
+                    SubType = "ASPXCodeBehind"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "removeFile.aspx.resx"
+                    DependentUpon = "removeFile.aspx.vb"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "SelectFile.aspx"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "SelectFile.aspx.vb"
+                    DependentUpon = "SelectFile.aspx"
+                    SubType = "ASPXCodeBehind"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "SelectFile.aspx.resx"
+                    DependentUpon = "SelectFile.aspx.vb"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "temp.aspx"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "temp.aspx.vb"
+                    DependentUpon = "temp.aspx"
+                    SubType = "ASPXCodeBehind"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "temp.aspx.resx"
+                    DependentUpon = "temp.aspx.vb"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "UploadAssets.aspx"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "UploadAssets.aspx.vb"
+                    DependentUpon = "UploadAssets.aspx"
+                    SubType = "ASPXCodeBehind"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "UploadAssets.aspx.resx"
+                    DependentUpon = "UploadAssets.aspx.vb"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "UploadFiles.aspx"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "UploadFiles.aspx.vb"
+                    DependentUpon = "UploadFiles.aspx"
+                    SubType = "ASPXCodeBehind"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "UploadFiles.aspx.resx"
+                    DependentUpon = "UploadFiles.aspx.vb"
+                    BuildAction = "EmbeddedResource"
+                />
+                <Folder RelPath = "AssetSheets\" />
+                <Folder RelPath = "ExportFiles\" />
+                <Folder RelPath = "LogFiles\" />
+            </Include>
+        </Files>
+    </VisualBasic>
+</VisualStudioProject>
+

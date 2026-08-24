@@ -1,0 +1,180 @@
+Imports System
+Imports System.IO
+Imports System.Data
+Imports System.Data.OleDb
+Public Class DefTempFix
+  Inherits System.Web.UI.Page
+
+#Region " Web Form Designer Generated Code "
+
+  'This call is required by the Web Form Designer.
+  <System.Diagnostics.DebuggerStepThrough()> Private Sub InitializeComponent()
+
+  End Sub
+  Protected WithEvents Label1 As System.Web.UI.WebControls.Label
+  Protected WithEvents btnImport As System.Web.UI.WebControls.Button
+  Protected WithEvents hlLogFile As System.Web.UI.WebControls.HyperLink
+
+  'Database Connection Details
+  Dim mySqlDataReader As System.Data.SqlClient.SqlDataReader
+  Dim MyConnection As System.Data.SqlClient.SqlConnection
+  Dim MyConnection2 As System.Data.SqlClient.SqlConnection
+  Dim MyConnection3 As System.Data.SqlClient.SqlConnection
+  Dim mySelectQuery As String
+  Dim myReader As System.Data.SqlClient.SqlDataReader
+  Dim myReader2 As System.Data.SqlClient.SqlDataReader
+  Dim myReader3 As System.Data.SqlClient.SqlDataReader
+  Dim MyCommand As New System.Data.SqlClient.SqlCommand
+  Dim MyCommand2 As New System.Data.SqlClient.SqlCommand
+
+  'other Variables
+  Dim lineCounter As Integer
+  Dim line As String
+
+  'NOTE: The following placeholder declaration is required by the Web Form Designer.
+  'Do not delete or move it.
+  Private designerPlaceholderDeclaration As System.Object
+
+  Private Sub Page_Init(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Init
+    'CODEGEN: This method call is required by the Web Form Designer
+    'Do not modify it using the code editor.
+    InitializeComponent()
+  End Sub
+
+#End Region
+
+  Private Sub Page_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
+    'Put user code to initialize the page here
+    MyConnection = New System.Data.SqlClient.SqlConnection(Session("OperationalDB"))
+    MyConnection2 = New System.Data.SqlClient.SqlConnection(Session("OperationalDB"))
+    MyConnection3 = New System.Data.SqlClient.SqlConnection(Session("OperationalDB"))
+    MyCommand.CommandTimeout = 60
+  End Sub
+  Sub GetCSVData()
+    Trace.Write(Now.ToString())
+    Dim FileLocation As String
+    FileLocation = Server.MapPath("DefSheets") & "\" & Request("FileName")
+    Dim sr As StreamReader = New StreamReader(FileLocation)
+    Dim counter As Integer
+    counter = 0
+    Do
+      line = sr.ReadLine()
+      line = Replace(Trim(line), "'", "''")
+
+      If lineCounter > 0 Then
+        If counter > 2 Then
+          line = Nothing
+        ElseIf Left(Trim(line), 2) = ",," Or Trim(line) = "" Then
+          'Call ErrorOutput(line)
+          Label1.Text = Label1.Text & "Line skipped : " & lineCounter & vbCrLf
+          counter = counter + 1
+        Else
+          counter = 0
+          Call Import(line)
+        End If
+      Else
+        'file.WriteLine(line)
+      End If
+      lineCounter = lineCounter + 1
+    Loop Until line Is Nothing
+    sr.Close()
+    Trace.Write(Now.ToString())
+    Label1.Text = "-- END FILE --"
+  End Sub
+  Sub Import(ByVal sLine)
+    Dim aLine() = ParseLine(sLine) 'Split(sLine, ",")
+    aLine = CheckArraySize(aLine)
+    Dim i As Integer
+    For i = 0 To UBound(aLine)
+      aLine(i) = Replace(aLine(i), """", "")
+      '  Trace.Write(aLine(i))
+    Next
+
+    Call UpdateUser(aLine(12), aLine(26))
+    'sEmployeeID = 12
+    'sUserUID =REDACTED
+
+    Call UpdateService(aLine(43), aLine(44))
+    'sUsageType = 43
+    'sServiceUID =REDACTED
+
+  End Sub
+  Sub UpdateUser(ByVal sEmployeeID, ByVal sUderUID)
+    'MyConnection.Close()
+    'If MyConnection.State.ToString = "Closed" Then
+    '  MyConnection.Open()
+    'End If
+    'Dim Transaction = MyConnection.BeginTransaction()
+    'MyCommand = New System.Data.SqlClient.SqlCommand
+    'MyCommand.Connection = MyConnection
+    'MyCommand.Transaction = Transaction
+    'Try
+      mySelectQuery = "UPDATE Users SET Custom1 = '" & sEmployeeID & "' WHERE (GenericUID = "REDACTED") AND (EndDate IS NULL) AND (ClientID = 15)"
+    Response.Write(mySelectQuery & vbCrLf)
+    '  Trace.Write(mySelectQuery)
+    '  MyCommand.CommandText = mySelectQuery
+    '  MyCommand.ExecuteNonQuery()
+
+    'Catch ex As Exception
+    '  Response.Write("Error Updating User Details:" & mySelectQuery)
+    '  Transaction.Rollback()
+    '  Response.End()
+    'Finally
+    '  MyConnection.Close()
+    'End Try
+  End Sub
+  Sub UpdateService(ByVal sUsageType, ByVal sServiceUID)
+    ' MyConnection.Close()
+    'If MyConnection.State.ToString = "Closed" Then
+    '  MyConnection.Open()
+    'End If
+    'Dim Transaction = MyConnection.BeginTransaction()
+    'MyCommand = New System.Data.SqlClient.SqlCommand
+    'MyCommand.Connection = MyConnection
+    'MyCommand.Transaction = Transaction
+    'Try
+    mySelectQuery = "UPDATE Service SET Spare1 = '" & sUsageType & "' WHERE (GenericUID = "REDACTED") AND (EndDate IS NULL) AND (ClientID = 15)"
+    Response.Write(mySelectQuery & vbCrLf)
+    '  Trace.Write(mySelectQuery)
+    '  MyCommand.CommandText = mySelectQuery
+    '  MyCommand.ExecuteNonQuery()
+
+    'Catch ex As Exception
+    '  Response.Write("Error Updating Service Details:" & mySelectQuery)
+    '  Transaction.Rollback()
+    '  Response.End()
+    'Finally
+    '  MyConnection.Close()
+    'End Try
+
+  End Sub
+  Function CheckArraySize(ByVal thisLine)
+    Dim arrayLength As Integer
+    Dim tempStr As String
+    Dim i As Integer
+    Dim RequiredLength As Integer
+    RequiredLength = 70
+    arrayLength = UBound(thisLine)
+    tempStr = thisLine(0)
+    For i = 1 To arrayLength
+      tempStr = tempStr & "," & thisLine(i)
+    Next
+    For i = 0 To (RequiredLength - arrayLength)
+      tempStr = tempStr & ","
+    Next
+    Return ParseLine(tempStr)
+  End Function
+  Private Shared Function ParseLine(ByVal oneLine As String) As String()
+    ' Returns an array containing the values of the comma-separated fields.
+
+    ' This pattern actually recognizes the correct commas.
+    ' The Regex.Split() command later gets text between the commas.
+    Dim pattern As String = ",(?=(?:[^""]*""[^""]*"")*(?![^""]*""))"
+    Dim r As System.Text.RegularExpressions.Regex = New System.Text.RegularExpressions.Regex(pattern)
+    Return r.Split(oneLine)
+  End Function
+
+  Private Sub btnImport_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btnImport.Click
+    Call GetCSVData()
+  End Sub
+End Class
