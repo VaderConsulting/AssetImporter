@@ -1,5 +1,7 @@
 # AssetImporter
 
+**Source last updated:** 2006-07-03
+
 Legacy VB.NET Visual Studio project.
 
 ## Contents
