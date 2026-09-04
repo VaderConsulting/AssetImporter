@@ -12,6 +12,11 @@ Legacy VB.NET Visual Studio project.
 
 - No third-party source-code attribution markers were identified in assembly/package metadata.
 
+## Requirements
+
+- Visual Studio .NET 2003
+- .NET Framework 1.1
+
 ## License
 
 MIT. See `LICENSE`.
